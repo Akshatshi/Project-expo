@@ -1,0 +1,126 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkillMatrix AI</title>
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Sora:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/auth.css">
+</head>
+<body>
+<div class="container">
+
+    <!-- LEFT SECTION -->
+    <div class="left">
+
+        <div class="brand"><img class="logo-full" src="assets/logo-full.png" alt="SkillMatrix AI"></div>
+
+        <div class="hero">
+
+            <p class="tag">Free for students</p>
+
+            <h1>Turn your skills into<br>a <span>career plan.</span></h1>
+
+            <p class="description">Add what you know, pick the internship you want, and get a clear, personal roadmap in under two minutes.</p>
+
+            <div class="features">
+                <div>Personalised skill analysis</div>
+                <div>Career track and project recommendations</div>
+                <div>Progress tracking with a daily focus streak</div>
+            </div>
+        </div>
+
+
+        <p class="copyright">
+            © 2026 SkillMatrix AI. All rights reserved.
+        </p>
+
+    </div>
+
+    <!-- RIGHT SECTION -->
+    <div class="right">
+
+        <div class="signup-box">
+
+            <div class="mobile-brand"><img src="assets/logo-mark.png" alt=""><span class="wordmark">Skill<b>Matrix</b> <i>AI</i></span></div>
+
+            <h2>Create your account</h2>
+
+            <p class="sub">
+                It takes less than a minute.
+            </p>
+
+            <form id="signup-form" action="#" method="post">
+
+                <label>Full Name</label>
+                <input type="text"
+                name="fullname"
+                placeholder="Enter your full name"
+                required>
+
+                <label>Email Address</label>
+                <input type="email"
+                name="email"
+                placeholder="Enter your email"
+                required>
+
+                <label>User ID</label>
+                <input type="text"
+                name="userid"
+                placeholder="Create your User ID"
+                required>
+
+                <label>Password</label>
+                <input type="password"
+                name="password"
+                placeholder="Create password"
+                minlength="8"
+                required>
+
+                <label>Confirm Password</label>
+                <input type="password"
+                name="confirm_password"
+                placeholder="Confirm your password"
+                minlength="8"
+                required>
+
+                <div class="terms">
+                    <input type="checkbox" required>
+                    <span>
+                        I agree to the
+                        <a href="#">Terms & Conditions</a>
+                    </span>
+                </div>
+
+                <button type="submit">
+                    Create My Account →
+                </button>
+
+            </form>
+
+            <div class="login">
+                Already have an account?
+                <a href="index.html">Login Here</a>
+            </div>
+
+            <div class="recovery">
+                <a href="forgot-password.html">Forgot Password?</a>
+                <span>|</span>
+                <a href="forgot-userid.html">Forgot User ID?</a>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+<script src="js/auth-ui.js"></script>
+</body>
+</html>

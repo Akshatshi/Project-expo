@@ -1,0 +1,17 @@
+# Optional "Blueprint": Render reads this file so you do not have to type the settings by hand.
+services:
+  - type: web
+    name: skillpath
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: GEMINI_API_KEY
+        sync: false          # you type this in the Render dashboard, never in code
+      - key: GEMINI_MODEL
+        value: gemini-flash-latest
+      - key: DEV_MODE
+        value: "true"        # "true" = reset link is shown on screen (no email server). See README.

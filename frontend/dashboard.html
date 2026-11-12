@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkillMatrix AI - Dashboard</title>
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Sora:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/app.css">
+</head>
+<body class="nav-open">
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#27b0ff"/><stop offset="1" stop-color="#8a5cf6"/></linearGradient><symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></symbol><symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/></symbol><symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></symbol><symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></symbol><symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol><symbol id="i-steps" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol><symbol id="i-code" viewBox="0 0 24 24"><path d="M8 8l-5 4 5 4M16 8l5 4-5 4M14 5l-4 14"/></symbol><symbol id="i-compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></symbol><symbol id="i-map" viewBox="0 0 24 24"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/></symbol><symbol id="i-timer" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/></symbol><symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M11 3l1.9 5.1L18 10l-5.1 1.9L11 17l-1.9-5.1L4 10l5.1-1.9z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></symbol><symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></symbol><symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></symbol><symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 3c1 3.5 5 5.5 5 10a5 5 0 01-10 0c0-2 1-3 2-4 .3 1.5 1 2 2 2 0-3-1-5 1-8z"/></symbol><symbol id="i-layers" viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></symbol><symbol id="i-trend" viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8M15 7h6v6"/></symbol><symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></symbol><symbol id="i-medal" viewBox="0 0 24 24"><circle cx="12" cy="9" r="6"/><path d="M8.5 14L7 22l5-3 5 3-1.5-8"/></symbol></defs></svg>
+<canvas id="bg-canvas" aria-hidden="true"></canvas>
+<canvas id="confetti-canvas" aria-hidden="true"></canvas>
+
+<!-- ============ SIDEBAR (opens / closes with the  button) ============ -->
+<aside class="sidebar" id="sidebar" aria-label="Main menu">
+    <div class="brand-row"><img src="assets/logo-mark.png" alt=""><span class="wordmark">Skill<b>Matrix</b> <i>AI</i></span></div>
+    <nav id="nav">
+        <p class="menu-title">Learn</p>
+        <a href="#overview" data-view="overview"><svg class="ic"><use href="#i-home"/></svg><b>Dashboard</b></a>
+        <a href="#analyzer" data-view="analyzer"><svg class="ic"><use href="#i-target"/></svg><b>Analyze My Skills</b></a>
+        <a href="#progress" data-view="progress"><svg class="ic"><use href="#i-chart"/></svg><b>Skills &amp; Progress</b></a>
+        <a href="#analysis" data-view="analysis"><svg class="ic"><use href="#i-search"/></svg><b>Skill Gap Analysis</b></a>
+        <p class="menu-title">Plan</p>
+        <a href="#roadmap" data-view="roadmap"><svg class="ic"><use href="#i-map"/></svg><b>Learning Roadmap</b></a>
+        <a href="#schedule" data-view="schedule"><svg class="ic"><use href="#i-calendar"/></svg><b>My Schedule</b></a>
+        <a href="#nextsteps" data-view="nextsteps"><svg class="ic"><use href="#i-steps"/></svg><b>Next Steps</b></a>
+        <p class="menu-title">Build</p>
+        <a href="#projects" data-view="projects"><svg class="ic"><use href="#i-code"/></svg><b>Projects</b></a>
+        <a href="#career" data-view="career"><svg class="ic"><use href="#i-compass"/></svg><b>Career Tracks</b></a>
+        <p class="menu-title">Tools</p>
+        <a href="#focus" data-view="focus"><svg class="ic"><use href="#i-timer"/></svg><b>Focus Timer</b></a>
+        <a href="#mentor" data-view="mentor"><svg class="ic"><use href="#i-sparkle"/></svg><b>AI Mentor</b></a>
+        <p class="menu-title">Account</p>
+        <a href="#profile" data-view="profile"><svg class="ic"><use href="#i-user"/></svg><b>My Profile</b></a>
+    </nav>
+    <div class="sidebar-bottom">
+        <a href="index.html" id="logout-link"><svg class="ic"><use href="#i-logout"/></svg><b>Log out</b></a>
+    </div>
+</aside>
+<div class="scrim" id="scrim"></div>
+
+<!-- ============ MAIN ============ -->
+<div class="main" id="main">
+
+    <header class="topbar">
+        <button type="button" class="menu-toggle" id="menu-toggle" aria-label="Toggle menu" aria-expanded="true" aria-controls="sidebar">
+            <span></span><span></span><span></span>
+        </button>
+
+        <a href="#profile" class="profile-chip" id="profile-chip" title="My Profile">
+            <div class="avatar" id="user-avatar">S</div>
+            <div class="chip-text"><strong id="user-name">Student</strong><small>My Profile</small></div>
+        </a>
+
+        <div class="topbar-title">
+            <h2 id="view-title">Dashboard</h2>
+            <p id="view-sub">Welcome back! Continue your learning journey.</p>
+        </div>
+
+        <div class="top-right">
+            <a href="#focus" class="mini-timer" id="mini-timer" hidden><svg class="ic"><use href="#i-timer"/></svg><span id="mini-timer-text">25:00</span></a>
+            <span class="streak-pill" id="streak-pill" title="Days in a row with a focus session"><svg class="ic"><use href="#i-flame"/></svg><b id="streak-count">0</b></span>
+        </div>
+    </header>
+
+    <p class="page-msg" id="page-msg" role="alert"></p>
+
+    <main id="views">
+
+        <!-- ========== DASHBOARD ========== -->
+        <section class="view" id="overview" data-title="Dashboard" data-sub="Welcome back! Continue your learning journey.">
+            <div class="welcome">
+                <div>
+                    <p class="small-text">YOUR LEARNING JOURNEY</p>
+                    <h1 id="welcome-title">Welcome to SkillMatrix AI!</h1>
+                    <p id="welcome-text">Build your skills and take the next step towards your career.</p>
+                    <a href="#analyzer" class="start-btn" id="welcome-btn">Analyze My Skills</a>
+                    <a href="#focus" class="start-btn ghost">Start Focus Session</a>
+                </div>
+                <div class="welcome-visual"><img src="assets/logo-mark.png" alt=""></div>
+            </div>
+
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-icon purple"><svg class="ic"><use href="#i-layers"/></svg></div>
+                    <p>Total Skills</p><h2 id="stat-skills">00</h2><small>Skills added to profile</small>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon orange"><svg class="ic"><use href="#i-trend"/></svg></div>
+                    <p>Skills to Improve</p><h2 id="stat-improve">00</h2><small>Based on career goal</small>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon green"><svg class="ic"><use href="#i-check"/></svg></div>
+                    <p>Learning Progress</p><h2 id="stat-progress">0%</h2><small>Overall completion</small>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon blue"><svg class="ic"><use href="#i-code"/></svg></div>
+                    <p>Projects</p><h2 id="stat-projects">00</h2><small>Recommended projects</small>
+                </div>
+            </div>
+
+            <div class="two-column even">
+                <div class="panel" id="continue-card"></div>
+                <div class="panel" id="today-card"></div>
+            </div>
+            <div class="panel quote-card"><p id="quote-text"></p><small id="quote-by"></small></div>
+        </section>
+
+        <!-- ========== ANALYZE ========== -->
+        <section class="view" id="analyzer" data-title="Analyze My Skills" data-sub="Add your skills, pick a target internship and get your match.">
+            <div class="panel">
+                <h3>Target Internship</h3>
+                <p class="muted">Add your current skills and pick the internship you want. We calculate your match instantly.</p>
+
+                <form id="analyze-form" class="analyze-form" action="#" method="post">
+                    <div class="field">
+                        <label for="internship">Target internship</label>
+                        <select id="internship" name="internship"></select>
+                    </div>
+                    <div class="field" id="custom-title-field" hidden>
+                        <label for="custom-title">Internship title</label>
+                        <input id="custom-title" type="text" maxlength="80" placeholder="e.g. AI Research Intern">
+                    </div>
+                    <div class="field wide" id="custom-skills-field" hidden>
+                        <label for="custom-skills">Required skills (comma separated)</label>
+                        <input id="custom-skills" type="text" placeholder="e.g. Python, Machine Learning, SQL">
+                    </div>
+                    <div class="field">
+                        <label for="course">Course</label>
+                        <input id="course" name="course" type="text" maxlength="60" placeholder="e.g. B.Tech CSE">
+                    </div>
+                    <div class="field">
+                        <label for="year">Year</label>
+                        <select id="year" name="year">
+                            <option value="">Select year</option>
+                            <option>1st Year</option><option>2nd Year</option><option>3rd Year</option><option>4th Year</option>
+                        </select>
+                    </div>
+                    <div class="field wide">
+                        <label for="skill-input">Your skills</label>
+                        <div class="skill-add">
+                            <input id="skill-input" type="text" list="skill-options" maxlength="40" placeholder="Type a skill, e.g. Python" autocomplete="off">
+                            <select id="skill-level" aria-label="Skill level">
+                                <option value="Beginner">Beginner</option>
+                                <option value="Intermediate" selected>Intermediate</option>
+                                <option value="Advanced">Advanced</option>
+                            </select>
+                            <button type="button" class="btn" id="add-skill-btn">+ Add</button>
+                        </div>
+                        <datalist id="skill-options"></datalist>
+                        <div class="chips" id="skill-chips"></div>
+                    </div>
+                    <div class="actions wide">
+                        <button type="submit" class="btn primary" id="analyze-btn">Analyze My Skills →</button>
+                        <span class="form-msg" id="analyze-msg" role="alert"></span>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- ========== SKILLS & PROGRESS ========== -->
+        <section class="view" id="progress" data-title="Skills & Progress" data-sub="Your current skill levels and career goal.">
+            <div class="two-column">
+                <div class="panel">
+                    <h3>My Learning Progress</h3>
+                    <p class="muted">Your current skill levels</p>
+                    <div id="skill-bars"></div>
+                </div>
+                <div class="panel" id="skills">
+                    <h3>My Skills</h3>
+                    <p class="muted">Skills added to your profile</p>
+                    <div class="skill-tags" id="skill-tags"></div>
+                    <h4 class="subheading">Career Goal</h4>
+                    <p class="career-goal" id="career-goal">Not selected yet</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========== GAP ANALYSIS ========== -->
+        <section class="view" id="analysis" data-title="Skill Gap Analysis" data-sub="See exactly what you know and what to learn next.">
+            <div class="panel">
+                <p class="muted">Compare your current skills with your career requirements.</p>
+                <div class="match-summary" id="match-summary" hidden>
+                    <div class="match-number" id="match-number">0%</div>
+                    <div class="match-detail">
+                        <strong id="match-label"></strong>
+                        <div class="bar"><div class="fill" id="match-fill" style="width:0%"></div></div>
+                        <small id="match-counts"></small>
+                    </div>
+                </div>
+                <div class="gap-list" id="gap-list"></div>
+            </div>
+        </section>
+
+        <!-- ========== SCHEDULE ========== -->
+        <section class="view" id="schedule" data-title="My Schedule" data-sub="This week's plan, day by day.">
+            <div class="panel schedule" id="schedule-list"></div>
+        </section>
+
+        <!-- ========== NEXT STEPS ========== -->
+        <section class="view" id="nextsteps" data-title="Personalized Next Steps" data-sub="The three things that move you forward fastest.">
+            <div class="three-column" id="next-steps"></div>
+        </section>
+
+        <!-- ========== PROJECTS ========== -->
+        <section class="view" id="projects" data-title="Projects" data-sub="Recommended projects, plus sample projects in every language.">
+            <div class="tabs" id="project-tabs" role="tablist">
+                <button type="button" class="tab active" data-tab="rec"> Recommended for you</button>
+                <button type="button" class="tab" data-tab="lang"> By language</button>
+                <button type="button" class="tab" data-tab="mine"> My projects</button>
+            </div>
+            <div class="tab-pane" id="tab-rec">
+                <h3 class="sub-title">Closes your skill gaps</h3>
+                <div class="three-column" id="project-list"></div>
+                <h3 class="sub-title">Matches the languages you already know</h3>
+                <div class="three-column" id="project-more"></div>
+            </div>
+            <div class="tab-pane" id="tab-lang" hidden>
+                <div class="lang-chips" id="lang-chips"></div>
+                <div class="three-column" id="lang-projects"></div>
+            </div>
+            <div class="tab-pane" id="tab-mine" hidden>
+                <div class="three-column" id="my-projects"></div>
+            </div>
+        </section>
+
+        <!-- ========== CAREER TRACKS ========== -->
+        <section class="view" id="career" data-title="Career Tracks" data-sub="Pick a track, follow the stages, learn with free playlists.">
+            <h3 class="sub-title">Explore tracks</h3>
+            <div class="track-grid" id="track-grid"></div>
+            <div class="panel track-detail" id="track-detail" hidden></div>
+            <h3 class="sub-title">Best matches for your skills</h3>
+            <div class="two-column even" id="career-list"></div>
+        </section>
+
+        <!-- ========== ROADMAP ========== -->
+        <section class="view" id="roadmap" data-title="Learning Roadmap" data-sub="AI-written week-by-week plan with free courses.">
+            <div class="panel">
+                <div class="roadmap-toolbar">
+                    <div class="field">
+                        <label for="roadmap-weeks">Weeks</label>
+                        <select id="roadmap-weeks">
+                            <option value="4">4 weeks</option><option value="6" selected>6 weeks</option>
+                            <option value="8">8 weeks</option><option value="10">10 weeks</option><option value="12">12 weeks</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="roadmap-hours">Hours / week</label>
+                        <input id="roadmap-hours" type="number" min="1" max="40" value="8">
+                    </div>
+                    <button type="button" class="btn primary" id="roadmap-btn"> Generate Roadmap</button>
+                </div>
+                <p class="form-msg" id="roadmap-msg" role="alert"></p>
+                <p class="muted roadmap-summary" id="roadmap-summary"></p>
+            </div>
+            <div class="panel roadmap" id="roadmap-list"></div>
+            <div class="panel" id="free-courses" hidden>
+                <h3> Free courses for your roadmap</h3>
+                <p class="muted">YouTube playlist searches in English and Hindi - pick the teacher you like best.</p>
+                <div id="course-list"></div>
+            </div>
+        </section>
+
+        <!-- ========== FOCUS TIMER ========== -->
+        <section class="view" id="focus" data-title="Focus Timer" data-sub="Pomodoro sessions to build a study streak.">
+            <div class="focus-wrap panel" id="focus-panel">
+                <button type="button" class="btn exit-focus" id="exit-focus">✕ Exit Focus Mode</button>
+                <div class="mode-tabs" id="mode-tabs">
+                    <button type="button" class="tab active" data-mode="focus">Focus</button>
+                    <button type="button" class="tab" data-mode="short">Short break</button>
+                    <button type="button" class="tab" data-mode="long">Long break</button>
+                </div>
+
+                <div class="ring">
+                    <svg viewBox="0 0 240 240" aria-hidden="true">
+                        <circle class="ring-bg" cx="120" cy="120" r="104"/>
+                        <circle class="ring-fg" id="ring-fg" cx="120" cy="120" r="104"/>
+                    </svg>
+                    <div class="ring-text"><span id="timer-text">25:00</span><small id="timer-mode">Focus</small></div>
+                </div>
+
+                <div class="field task-pick">
+                    <label for="focus-task">What are you working on?</label>
+                    <select id="focus-task"></select>
+                </div>
+
+                <div class="timer-controls">
+                    <button type="button" class="btn primary big" id="timer-start">Start</button>
+                    <button type="button" class="btn" id="timer-reset">↺ Reset</button>
+                    <button type="button" class="btn" id="timer-done" hidden>✓ Mark task done</button>
+                </div>
+
+                <div class="timer-options">
+                    <label>Focus <input type="number" id="opt-focus" min="5" max="90" value="25"> min</label>
+                    <label>Short <input type="number" id="opt-short" min="1" max="30" value="5"> min</label>
+                    <label>Long <input type="number" id="opt-long" min="5" max="60" value="15"> min</label>
+                    <label class="switch"><input type="checkbox" id="opt-noise">  Focus sound</label>
+                </div>
+
+                <button type="button" class="btn focus-enter" id="enter-focus"> Enter Focus Mode (full screen)</button>
+            </div>
+
+            <div class="focus-stats" id="focus-stats"></div>
+        </section>
+
+        <!-- ========== AI MENTOR ========== -->
+        <section class="view" id="mentor" data-title="AI Mentor" data-sub="Ask anything about skills, projects or careers.">
+            <div class="panel chat">
+                <div class="chat-log" id="chat-log"></div>
+                <div class="chat-suggest" id="chat-suggest"></div>
+                <form class="chat-form" id="chat-form" action="#" method="post">
+                    <input type="text" id="chat-input" maxlength="500" placeholder="Ask your mentor... (Hindi / English / Hinglish)" autocomplete="off">
+                    <button type="submit" class="btn primary" id="chat-send">Send </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- ========== PROFILE ========== -->
+        <section class="view" id="profile" data-title="My Profile" data-sub="Your details, stats and badges.">
+            <div id="profile-panel"></div>
+        </section>
+
+    </main>
+
+    <footer>
+        <p>© 2026 SkillMatrix AI</p>
+    </footer>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/extras.js"></script>
+</body>
+</html>

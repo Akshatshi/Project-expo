@@ -1,0 +1,310 @@
+{
+ "projects": [
+  {
+   "id": "portfolio-site",
+   "title": "Personal Portfolio Website",
+   "icon": "\ud83c\udf10",
+   "level": "Beginner",
+   "description": "Build a multi-section portfolio with HTML and CSS that works on phones.",
+   "skills": [
+    "HTML",
+    "CSS",
+    "Responsive Design"
+   ]
+  },
+  {
+   "id": "landing-clone",
+   "title": "Landing Page Clone",
+   "icon": "\ud83d\uddbc\ufe0f",
+   "level": "Beginner",
+   "description": "Recreate a real company landing page pixel-by-pixel with Flexbox and Grid.",
+   "skills": [
+    "HTML",
+    "CSS",
+    "Responsive Design"
+   ]
+  },
+  {
+   "id": "js-games",
+   "title": "Browser Mini-Games",
+   "icon": "\ud83c\udfae",
+   "level": "Beginner",
+   "description": "Make a quiz and a tic-tac-toe game using DOM events and JavaScript logic.",
+   "skills": [
+    "JavaScript",
+    "Problem Solving"
+   ]
+  },
+  {
+   "id": "weather-app",
+   "title": "Weather Dashboard",
+   "icon": "\u26c5",
+   "level": "Intermediate",
+   "description": "Fetch live weather from a public API and display it with a clean UI.",
+   "skills": [
+    "JavaScript",
+    "REST APIs",
+    "HTML",
+    "CSS"
+   ]
+  },
+  {
+   "id": "react-todo",
+   "title": "React Task Manager",
+   "icon": "\u2705",
+   "level": "Intermediate",
+   "description": "A to-do app with components, state, filters and local persistence.",
+   "skills": [
+    "React",
+    "JavaScript",
+    "Git"
+   ]
+  },
+  {
+   "id": "react-ecom",
+   "title": "Shopping Cart App",
+   "icon": "\ud83d\uded2",
+   "level": "Intermediate",
+   "description": "Product list, cart and checkout flow built with React and a mock API.",
+   "skills": [
+    "React",
+    "REST APIs",
+    "Responsive Design",
+    "JavaScript"
+   ]
+  },
+  {
+   "id": "ts-kanban",
+   "title": "Typed Kanban Board",
+   "icon": "\ud83d\udccb",
+   "level": "Advanced",
+   "description": "Drag-and-drop Kanban board in React with TypeScript types.",
+   "skills": [
+    "TypeScript",
+    "React",
+    "JavaScript"
+   ]
+  },
+  {
+   "id": "flask-notes",
+   "title": "Notes REST API",
+   "icon": "\ud83d\udcdd",
+   "level": "Beginner",
+   "description": "CRUD notes API using Flask and SQLite, tested with Postman.",
+   "skills": [
+    "Flask",
+    "Python",
+    "REST APIs",
+    "SQL"
+   ]
+  },
+  {
+   "id": "student-mgmt",
+   "title": "Student Management System",
+   "icon": "\ud83d\udcda",
+   "level": "Intermediate",
+   "description": "Flask app with login, student records and a SQL database.",
+   "skills": [
+    "Flask",
+    "SQL",
+    "Python",
+    "Git"
+   ]
+  },
+  {
+   "id": "url-shortener",
+   "title": "URL Shortener Service",
+   "icon": "\ud83d\udd17",
+   "level": "Intermediate",
+   "description": "A containerised service with hashing, redirects and click statistics.",
+   "skills": [
+    "REST APIs",
+    "SQL",
+    "Docker",
+    "Python"
+   ]
+  },
+  {
+   "id": "dsa-toolkit",
+   "title": "DSA Practice Toolkit",
+   "icon": "\ud83e\udde9",
+   "level": "Beginner",
+   "description": "Implement stacks, queues, linked lists and sorting from scratch with tests.",
+   "skills": [
+    "Data Structures",
+    "Python",
+    "Problem Solving",
+    "Unit Testing"
+   ]
+  },
+  {
+   "id": "library-oop",
+   "title": "Library Management (OOP)",
+   "icon": "\ud83c\udfdb\ufe0f",
+   "level": "Intermediate",
+   "description": "Model books, members and loans with classes, inheritance and file storage.",
+   "skills": [
+    "Object Oriented Programming",
+    "Python",
+    "Java"
+   ]
+  },
+  {
+   "id": "sales-dashboard",
+   "title": "Sales Analysis Dashboard",
+   "icon": "\ud83d\udcca",
+   "level": "Beginner",
+   "description": "Clean a sales Excel sheet, build pivot tables and charts, then present findings.",
+   "skills": [
+    "Excel",
+    "Data Visualization",
+    "Statistics",
+    "Communication"
+   ]
+  },
+  {
+   "id": "sql-analytics",
+   "title": "SQL Business Analytics",
+   "icon": "\ud83d\uddc3\ufe0f",
+   "level": "Intermediate",
+   "description": "Answer 20 business questions on a sample database using joins and aggregates.",
+   "skills": [
+    "SQL",
+    "Data Visualization",
+    "Power BI"
+   ]
+  },
+  {
+   "id": "pandas-eda",
+   "title": "Exploratory Data Analysis",
+   "icon": "\ud83d\udd0d",
+   "level": "Intermediate",
+   "description": "Analyse a Kaggle dataset using Pandas, NumPy and charts, and write up insights.",
+   "skills": [
+    "Pandas",
+    "NumPy",
+    "Python",
+    "Statistics",
+    "Data Visualization"
+   ]
+  },
+  {
+   "id": "ml-predictor",
+   "title": "House Price Predictor",
+   "icon": "\ud83c\udfe0",
+   "level": "Intermediate",
+   "description": "Train and evaluate regression models with scikit-learn.",
+   "skills": [
+    "Machine Learning",
+    "scikit-learn",
+    "Pandas",
+    "Python",
+    "Statistics"
+   ]
+  },
+  {
+   "id": "java-bank",
+   "title": "Banking Console App",
+   "icon": "\ud83c\udfe6",
+   "level": "Intermediate",
+   "description": "Java console application with accounts, transactions and JDBC storage.",
+   "skills": [
+    "Java",
+    "Object Oriented Programming",
+    "SQL",
+    "Data Structures"
+   ]
+  },
+  {
+   "id": "spring-api",
+   "title": "Spring Boot Employee API",
+   "icon": "\ud83c\udf43",
+   "level": "Intermediate",
+   "description": "REST API for employees using Spring Boot and a relational database.",
+   "skills": [
+    "Spring Boot",
+    "Java",
+    "REST APIs",
+    "SQL",
+    "Git"
+   ]
+  },
+  {
+   "id": "android-notes",
+   "title": "Android Notes App",
+   "icon": "\ud83d\udcf1",
+   "level": "Beginner",
+   "description": "Notes app in Kotlin with a RecyclerView and Firebase sync.",
+   "skills": [
+    "Kotlin",
+    "Android SDK",
+    "Firebase"
+   ]
+  },
+  {
+   "id": "android-news",
+   "title": "News Reader App",
+   "icon": "\ud83d\udcf0",
+   "level": "Intermediate",
+   "description": "Fetch and display news from a REST API in an Android app.",
+   "skills": [
+    "Android SDK",
+    "Kotlin",
+    "REST APIs",
+    "Java"
+   ]
+  },
+  {
+   "id": "port-scanner",
+   "title": "Network Scanner Lab",
+   "icon": "\ud83d\udee1\ufe0f",
+   "level": "Intermediate",
+   "description": "Write a Python port scanner and analyse traffic on a home lab network.",
+   "skills": [
+    "Networking",
+    "Python",
+    "Security Fundamentals",
+    "Linux"
+   ]
+  },
+  {
+   "id": "crypto-vault",
+   "title": "Password Vault & Hashing Demo",
+   "icon": "\ud83d\udd10",
+   "level": "Intermediate",
+   "description": "Encrypt secrets, hash passwords and document the threat model.",
+   "skills": [
+    "Cryptography",
+    "Security Fundamentals",
+    "Python"
+   ]
+  },
+  {
+   "id": "linux-server",
+   "title": "Linux Server Hardening",
+   "icon": "\ud83d\udc27",
+   "level": "Beginner",
+   "description": "Set up a Linux VM, users, permissions, firewall and shell scripts.",
+   "skills": [
+    "Linux",
+    "Shell Scripting",
+    "Networking",
+    "Security Fundamentals"
+   ]
+  },
+  {
+   "id": "ci-pipeline",
+   "title": "CI/CD Pipeline for a Web App",
+   "icon": "\ud83d\ude80",
+   "level": "Intermediate",
+   "description": "Dockerise an app and auto-test and deploy it with GitHub Actions to AWS.",
+   "skills": [
+    "Docker",
+    "CI/CD",
+    "Git",
+    "AWS",
+    "Linux"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,454 @@
+{
+ "internships": [
+  {
+   "id": "web-developer",
+   "title": "Web Developer Intern",
+   "description": "Build and maintain websites and web apps.",
+   "required_skills": [
+    {
+     "skill": "HTML",
+     "weight": 3,
+     "min_level": 2
+    },
+    {
+     "skill": "CSS",
+     "weight": 3,
+     "min_level": 2
+    },
+    {
+     "skill": "JavaScript",
+     "weight": 3,
+     "min_level": 2
+    },
+    {
+     "skill": "React",
+     "weight": 2,
+     "min_level": 2
+    },
+    {
+     "skill": "Responsive Design",
+     "weight": 2,
+     "min_level": 2
+    },
+    {
+     "skill": "Git",
+     "weight": 1,
+     "min_level": 2
+    },
+    {
+     "skill": "REST APIs",
+     "weight": 2,
+     "min_level": 1
+    },
+    {
+     "skill": "Problem Solving",
+     "weight": 1,
+     "min_level": 2
+    }
+   ]
+  },
+  {
+   "id": "frontend-developer",
+   "title": "Frontend Developer Intern",
+   "description": "Create fast, accessible user interfaces.",
+   "required_skills": [
+    {
+     "skill": "HTML",
+     "weight": 3,
+     "min_level": 3
+    },
+    {
+     "skill": "CSS",
+     "weight": 3,
+     "min_level": 3
+    },
+    {
+     "skill": "JavaScript",
+     "weight": 3,
+     "min_level": 2
+    },
+    {
+     "skill": "React",
+     "weight": 3,
+     "min_level": 2
+    },
+    {
+     "skill": "TypeScript",
+     "weight": 2,
+     "min_level": 1
+    },
+    {
+     "skill": "Responsive Design",
+     "weight": 2,
+     "min_level": 2
+    },
+    {
+     "skill": "Git",
+     "weight": 1,
+     "min_level": 2
+    }
+   ]
+  },
+  {
+   "id": "backend-developer",
+   "title": "Backend Developer Intern",
+   "description": "Design APIs, databases and server-side logic.",
+   "required_skills": [
+    {
+     "skill": "Python",
+     "weight": 3,
+     "min_level": 2
+    },
+    {
+     "skill": "SQL",
+     "weight": 3,
+     "min_level": 2
+    },
+    {
+     "skill": "REST APIs",
+     "weight": 3,
+     "min_level": 2
+    },
+    {
+     "skill": "Flask",
+     "weight": 2,
+     "min_level": 2
+    },
+    {
+     "skill": "Git",
+     "weight": 2,
+     "min_level": 2
+    },
+    {
+     "skill": "Data Structures",
+     "weight": 2,
+     "min_level": 2
+    },
+    {
+     "skill": "Docker",
+     "weight": 1,
+     "min_level": 1
+    },
+    {
+     "skill": "Problem Solving",
+     "weight": 1,
+     "min_level": 2
+    }
+   ]
+  },
+  {
+   "id": "python-developer",
+   "title": "Python Developer Intern",
+   "description": "Write clean Python for automation, tools and services.",
+   "required_skills": [
+    {
+     "skill": "Python",
+     "weight": 3,
+     "min_level": 3
+    },
+    {
+     "skill": "Object Oriented Programming",
+     "weight": 2,
+     "min_level": 2
+    },
+    {
+     "skill": "Data Structures",
+     "weight": 2,
+     "min_level": 2
+    },
+    {
+     "skill": "SQL",
+     "weight": 2,
+     "min_level": 2
+    },
+    {
+     "skill": "Git",
+     "weight": 2,
+     "min_level": 2
+    },
+    {
+     "skill": "REST APIs",
+     "weight": 1,
+     "min_level": 1
+    },
+    {
+     "skill": "Unit Testing",
+     "weight": 1,
+     "min_level": 1
+    },
+    {
+     "skill": "Problem Solving",
+     "weight": 1,
+     "min_level": 2
+    }
+   ]
+  },
+  {
+   "id": "data-analyst",
+   "title": "Data Analyst Intern",
+   "description": "Turn raw data into insights and dashboards.",
+   "required_skills": [
+    {
+     "skill": "Excel",
+     "weight": 3,
+     "min_level": 2
+    },
+    {
+     "skill": "SQL",
+     "weight": 3,
+     "min_level": 2
+    },
+    {
+     "skill": "Python",
+     "weight": 2,
+     "min_level": 2
+    },
+    {
+     "skill": "Pandas",
+     "weight": 2,
+     "min_level": 2
+    },
+    {
+     "skill": "Data Visualization",
+     "weight": 3,
+     "min_level": 2
+    },
+    {
+     "skill": "Statistics",
+     "weight": 2,
+     "min_level": 2
+    },
+    {
+     "skill": "Power BI",
+     "weight": 1,
+     "min_level": 1
+    },
+    {
+     "skill": "Communication",
+     "weight": 1,
+     "min_level": 2
+    }
+   ]
+  },
+  {
+   "id": "data-science-ml",
+   "title": "Data Science / ML Intern",
+   "description": "Build and evaluate machine-learning models.",
+   "required_skills": [
+    {
+     "skill": "Python",
+     "weight": 3,
+     "min_level": 2
+    },
+    {
+     "skill": "Pandas",
+     "weight": 3,
+     "min_level": 2
+    },
+    {
+     "skill": "NumPy",
+     "weight": 2,
+     "min_level": 2
+    },
+    {
+     "skill": "Statistics",
+     "weight": 3,
+     "min_level": 2
+    },
+    {
+     "skill": "Machine Learning",
+     "weight": 3,
+     "min_level": 2
+    },
+    {
+     "skill": "scikit-learn",
+     "weight": 2,
+     "min_level": 2
+    },
+    {
+     "skill": "Data Visualization",
+     "weight": 2,
+     "min_level": 2
+    },
+    {
+     "skill": "SQL",
+     "weight": 1,
+     "min_level": 1
+    },
+    {
+     "skill": "Git",
+     "weight": 1,
+     "min_level": 1
+    }
+   ]
+  },
+  {
+   "id": "java-developer",
+   "title": "Java Developer Intern",
+   "description": "Develop enterprise-grade applications with Java.",
+   "required_skills": [
+    {
+     "skill": "Java",
+     "weight": 3,
+     "min_level": 3
+    },
+    {
+     "skill": "Object Oriented Programming",
+     "weight": 3,
+     "min_level": 2
+    },
+    {
+     "skill": "Data Structures",
+     "weight": 3,
+     "min_level": 2
+    },
+    {
+     "skill": "SQL",
+     "weight": 2,
+     "min_level": 2
+    },
+    {
+     "skill": "Spring Boot",
+     "weight": 2,
+     "min_level": 1
+    },
+    {
+     "skill": "Git",
+     "weight": 2,
+     "min_level": 2
+    },
+    {
+     "skill": "Problem Solving",
+     "weight": 1,
+     "min_level": 2
+    }
+   ]
+  },
+  {
+   "id": "android-developer",
+   "title": "Android Developer Intern",
+   "description": "Build mobile apps for Android devices.",
+   "required_skills": [
+    {
+     "skill": "Kotlin",
+     "weight": 3,
+     "min_level": 2
+    },
+    {
+     "skill": "Android SDK",
+     "weight": 3,
+     "min_level": 2
+    },
+    {
+     "skill": "Java",
+     "weight": 1,
+     "min_level": 1
+    },
+    {
+     "skill": "REST APIs",
+     "weight": 2,
+     "min_level": 2
+    },
+    {
+     "skill": "Git",
+     "weight": 2,
+     "min_level": 2
+    },
+    {
+     "skill": "Firebase",
+     "weight": 1,
+     "min_level": 1
+    },
+    {
+     "skill": "Problem Solving",
+     "weight": 1,
+     "min_level": 2
+    }
+   ]
+  },
+  {
+   "id": "cybersecurity",
+   "title": "Cybersecurity Intern",
+   "description": "Help detect, prevent and respond to security threats.",
+   "required_skills": [
+    {
+     "skill": "Networking",
+     "weight": 3,
+     "min_level": 2
+    },
+    {
+     "skill": "Linux",
+     "weight": 3,
+     "min_level": 2
+    },
+    {
+     "skill": "Security Fundamentals",
+     "weight": 3,
+     "min_level": 2
+    },
+    {
+     "skill": "Python",
+     "weight": 2,
+     "min_level": 2
+    },
+    {
+     "skill": "Cryptography",
+     "weight": 1,
+     "min_level": 1
+    },
+    {
+     "skill": "Problem Solving",
+     "weight": 1,
+     "min_level": 2
+    }
+   ]
+  },
+  {
+   "id": "devops-cloud",
+   "title": "DevOps / Cloud Intern",
+   "description": "Automate deployments and run cloud infrastructure.",
+   "required_skills": [
+    {
+     "skill": "Linux",
+     "weight": 3,
+     "min_level": 2
+    },
+    {
+     "skill": "Git",
+     "weight": 3,
+     "min_level": 2
+    },
+    {
+     "skill": "Docker",
+     "weight": 3,
+     "min_level": 2
+    },
+    {
+     "skill": "CI/CD",
+     "weight": 2,
+     "min_level": 1
+    },
+    {
+     "skill": "AWS",
+     "weight": 2,
+     "min_level": 1
+    },
+    {
+     "skill": "Shell Scripting",
+     "weight": 2,
+     "min_level": 2
+    },
+    {
+     "skill": "Networking",
+     "weight": 1,
+     "min_level": 1
+    },
+    {
+     "skill": "Python",
+     "weight": 1,
+     "min_level": 1
+    }
+   ]
+  }
+ ]
+}
