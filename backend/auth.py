@@ -1,4 +1,3 @@
-"""Password hashing + signed bearer tokens (no extra libraries needed)."""
 import hashlib
 import secrets
 from functools import wraps

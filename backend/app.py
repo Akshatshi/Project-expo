@@ -1,7 +1,3 @@
-"""Skill Matrix AI - Flask application.
-
-Run:  python app.py        (serves the API on /api and the frontend on /)
-"""
 import os
 
 from flask import Flask, abort, send_from_directory
@@ -36,7 +32,6 @@ def create_app(test_config: dict | None = None) -> Flask:
         resp.headers.setdefault("Referrer-Policy", "same-origin")
         return resp
 
-    # The existing frontend is served by Flask too -> same origin, no CORS trouble.
     @app.get("/", defaults={"filename": "index.html"})
     @app.get("/<path:filename>")
     def frontend(filename):

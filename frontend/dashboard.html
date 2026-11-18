@@ -9,10 +9,13 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Sora:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/app.css">
+    <link rel="stylesheet" href="css/tools.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0b1020">
 </head>
 <body class="nav-open">
 
-<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#27b0ff"/><stop offset="1" stop-color="#8a5cf6"/></linearGradient><symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></symbol><symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/></symbol><symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></symbol><symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></symbol><symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol><symbol id="i-steps" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol><symbol id="i-code" viewBox="0 0 24 24"><path d="M8 8l-5 4 5 4M16 8l5 4-5 4M14 5l-4 14"/></symbol><symbol id="i-compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></symbol><symbol id="i-map" viewBox="0 0 24 24"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/></symbol><symbol id="i-timer" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/></symbol><symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M11 3l1.9 5.1L18 10l-5.1 1.9L11 17l-1.9-5.1L4 10l5.1-1.9z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></symbol><symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></symbol><symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></symbol><symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 3c1 3.5 5 5.5 5 10a5 5 0 01-10 0c0-2 1-3 2-4 .3 1.5 1 2 2 2 0-3-1-5 1-8z"/></symbol><symbol id="i-layers" viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></symbol><symbol id="i-trend" viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8M15 7h6v6"/></symbol><symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></symbol><symbol id="i-medal" viewBox="0 0 24 24"><circle cx="12" cy="9" r="6"/><path d="M8.5 14L7 22l5-3 5 3-1.5-8"/></symbol></defs></svg>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#27b0ff"/><stop offset="1" stop-color="#8a5cf6"/></linearGradient><symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></symbol><symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/></symbol><symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></symbol><symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></symbol><symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol><symbol id="i-steps" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol><symbol id="i-code" viewBox="0 0 24 24"><path d="M8 8l-5 4 5 4M16 8l5 4-5 4M14 5l-4 14"/></symbol><symbol id="i-compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></symbol><symbol id="i-map" viewBox="0 0 24 24"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/></symbol><symbol id="i-timer" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/></symbol><symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M11 3l1.9 5.1L18 10l-5.1 1.9L11 17l-1.9-5.1L4 10l5.1-1.9z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></symbol><symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></symbol><symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></symbol><symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 3c1 3.5 5 5.5 5 10a5 5 0 01-10 0c0-2 1-3 2-4 .3 1.5 1 2 2 2 0-3-1-5 1-8z"/></symbol><symbol id="i-layers" viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></symbol><symbol id="i-trend" viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8M15 7h6v6"/></symbol><symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></symbol><symbol id="i-gamepad" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="11" rx="5"/><path d="M7 10v5M4.5 12.5h5"/><circle cx="15.5" cy="11.5" r="1"/><circle cx="18" cy="14" r="1"/></symbol><symbol id="i-medal" viewBox="0 0 24 24"><circle cx="12" cy="9" r="6"/><path d="M8.5 14L7 22l5-3 5 3-1.5-8"/></symbol></defs></svg>
 <canvas id="bg-canvas" aria-hidden="true"></canvas>
 <canvas id="confetti-canvas" aria-hidden="true"></canvas>
 
@@ -35,7 +38,22 @@
         <p class="menu-title">Tools</p>
         <a href="#focus" data-view="focus"><svg class="ic"><use href="#i-timer"/></svg><b>Focus Timer</b></a>
         <a href="#mentor" data-view="mentor"><svg class="ic"><use href="#i-sparkle"/></svg><b>AI Mentor</b></a>
+        <a href="#skilltest" data-view="skilltest"><svg class="ic"><use href="#i-check"/></svg><b>Skill Test</b></a>
+        <a href="#games" data-view="games"><svg class="ic"><use href="#i-gamepad"/></svg><b>Game Zone</b></a>
+        <a href="#arcade" data-view="arcade"><svg class="ic"><use href="#i-gamepad"/></svg><b>Code Arcade</b></a>
+        <p class="menu-title">Career Kit</p>
+        <a href="#resume" data-view="resume"><svg class="ic"><use href="#i-layers"/></svg><b>Resume Builder</b></a>
+        <a href="#ats" data-view="ats"><svg class="ic"><use href="#i-search"/></svg><b>ATS Checker</b></a>
+        <a href="#linkedin" data-view="linkedin"><svg class="ic"><use href="#i-user"/></svg><b>LinkedIn Analyzer</b></a>
+        <a href="#interview" data-view="interview"><svg class="ic"><use href="#i-sparkle"/></svg><b>Interview Prep</b></a>
+        <a href="#notes" data-view="notes"><svg class="ic"><use href="#i-code"/></svg><b>Study Notes</b></a>
+        <a href="#tracker" data-view="tracker"><svg class="ic"><use href="#i-check"/></svg><b>Application Tracker</b></a>
+        <a href="#simulator" data-view="simulator"><svg class="ic"><use href="#i-trend"/></svg><b>Skill Simulator</b></a>
+        <a href="#company" data-view="company"><svg class="ic"><use href="#i-layers"/></svg><b>Company Prep</b></a>
+        <a href="#cover" data-view="cover"><svg class="ic"><use href="#i-user"/></svg><b>Cover Letter</b></a>
+        <a href="#market" data-view="market"><svg class="ic"><use href="#i-trend"/></svg><b>Job Market</b></a>
         <p class="menu-title">Account</p>
+        <a href="#privacy" data-view="privacy"><svg class="ic"><use href="#i-check"/></svg><b>Privacy &amp; Data</b></a>
         <a href="#profile" data-view="profile"><svg class="ic"><use href="#i-user"/></svg><b>My Profile</b></a>
     </nav>
     <div class="sidebar-bottom">
@@ -198,13 +216,14 @@
         </section>
 
         <!-- ========== SCHEDULE ========== -->
-        <section class="view" id="schedule" data-title="My Schedule" data-sub="This week's plan, day by day.">
-            <div class="panel schedule" id="schedule-list"></div>
+        <section class="view" id="schedule" data-title="My Schedule" data-sub="Build your own timetable: choose days, hours and start time.">
+            <div id="plan-box"></div>
         </section>
 
         <!-- ========== NEXT STEPS ========== -->
         <section class="view" id="nextsteps" data-title="Personalized Next Steps" data-sub="The three things that move you forward fastest.">
             <div class="three-column" id="next-steps"></div>
+            <div id="next-reco"></div>
         </section>
 
         <!-- ========== PROJECTS ========== -->
@@ -320,6 +339,39 @@
             </div>
         </section>
 
+        <!-- ========== CODE ARCADE ========== -->
+        <section class="view" id="arcade" data-title="Code Arcade" data-sub="Play, earn XP and learn Python, HTML, CSS and more.">
+            <div class="panel arc-stats" id="arc-stats"></div>
+            <div id="arc-home">
+                <h3 class="sub-title">Quiz rounds (6 questions each)</h3>
+                <div class="bt-tiers" id="arc-qlevel"></div>
+                <div class="game-grid" id="arc-langs"></div>
+                <h3 class="sub-title">Answer Rain: catch the right answer before it lands</h3>
+                <div class="game-grid" id="arc-rain"></div>
+                <h3 class="sub-title">Monster battles (5 levels: Easy to Insane)</h3>
+                <div class="game-grid" id="arc-battle"></div>
+                <h3 class="sub-title">Live labs: write real HTML and CSS</h3>
+                <div class="game-grid" id="arc-labs"></div>
+            </div>
+            <div id="arc-play" hidden></div>
+        </section>
+
+        <section class="view" id="skilltest" data-title="Skill Test" data-sub="Random questions verify the level you claim."><div id="v-skilltest"></div></section>
+
+        <section class="view" id="resume" data-title="Resume Builder" data-sub="Fill each section; the resume updates live."><div id="v-resume"></div></section>
+        <section class="view" id="ats" data-title="ATS Checker" data-sub="Upload your resume and see how ATS software reads it."><div id="v-ats"></div></section>
+        <section class="view" id="linkedin" data-title="LinkedIn Analyzer" data-sub="Tips plus a full profile analysis."><div id="v-linkedin"></div></section>
+        <section class="view" id="interview" data-title="Interview Prep" data-sub="Questions with full answers and a mock interview."><div id="v-interview"></div></section>
+        <section class="view" id="notes" data-title="Study Notes" data-sub="Notes for every language: edit, upload, download."><div id="v-notes"></div></section>
+        <section class="view" id="tracker" data-title="Application Tracker" data-sub="Track every application from wishlist to offer."><div id="v-tracker"></div></section>
+        <section class="view" id="simulator" data-title="Skill Simulator" data-sub="See how one new skill changes your match."><div id="v-simulator"></div></section>
+        <section class="view" id="company" data-title="Company Prep" data-sub="What each type of company looks for."><div id="v-company"></div></section>
+        <section class="view" id="cover" data-title="Cover Letter & Emails" data-sub="Cover letter, cold email and referral request."><div id="v-cover"></div></section>
+        <section class="view" id="privacy" data-title="Privacy & Data" data-sub="Export or delete everything we store."><div id="v-privacy"></div></section>
+        <section class="view" id="market" data-title="Job Market" data-sub="What companies ask for, shown as charts."><div id="v-market"></div></section>
+
+        <section class="view" id="games" data-title="Game Zone" data-sub="Space and racing games powered by coding questions."><div id="v-games"></div></section>
+
         <!-- ========== PROFILE ========== -->
         <section class="view" id="profile" data-title="My Profile" data-sub="Your details, stats and badges.">
             <div id="profile-panel"></div>
@@ -332,8 +384,25 @@
     </footer>
 </div>
 
-<script src="js/api.js"></script>
+<script src="js/config.js"></script>
+    <script src="js/api.js"></script>
 <script src="js/dashboard.js"></script>
+<script src="js/starters.js"></script>
 <script src="js/extras.js"></script>
+<script src="js/arcade-data.js"></script>
+<script src="js/arcade-gen.js"></script>
+<script src="js/arcade-bank.js"></script>
+<script src="js/sound.js"></script>
+<script src="js/arcade.js"></script>
+<script src="js/battle.js"></script>
+<script src="js/rain.js"></script>
+<script src="js/planner.js"></script>
+<script src="js/sync.js"></script>
+<script src="js/qbank.js"></script>
+<script src="js/kit-data.js"></script>
+<script src="js/qbank2.js"></script>
+<script src="js/qbank3.js"></script>
+<script src="js/games.js"></script>
+<script src="js/tools.js"></script>
 </body>
 </html>

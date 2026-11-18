@@ -1,4 +1,3 @@
-"""Recommend portfolio projects that close the student's skill gaps."""
 import json
 from functools import lru_cache
 
@@ -15,9 +14,6 @@ def load_projects():
 
 
 def recommend(analysis: dict, requirements: list, limit: int = 3) -> list:
-    """Greedy set-cover: repeatedly pick the project covering the most
-    still-uncovered gap skills (weighted by importance), preferring a
-    difficulty that matches how far the student already is."""
     weights = {skill_key(r["skill"]): r["weight"] for r in requirements}
     gap_names = {skill_key(s): s for s in analysis["gaps_priority"]}
     if not gap_names:  # nothing missing -> stretch projects on the most important skills
@@ -39,7 +35,6 @@ def recommend(analysis: dict, requirements: list, limit: int = 3) -> list:
             focus = len(covers) / len(p["skills"])  # fewer unrelated skills = better
             return (gain, fit, round(focus, 3))
 
-        # ties are broken alphabetically so results are always repeatable
         best = max(pool, key=lambda p: (score(p), tuple(-ord(c) for c in p["id"])))
         gain = score(best)[0]
         if gain == 0 and picked:

@@ -19,7 +19,6 @@
         return svg;
     }
 
-    /* ============================================================ toast + confetti + ripple */
     SM.toast = (text) => {
         const t = el('div', { class: 'toast', text });
         document.body.append(t);
@@ -58,7 +57,6 @@
         b.append(r); setTimeout(() => r.remove(), 650);
     });
 
-    /* ============================================================ particle background */
     (function particles() {
         const cv = $('bg-canvas');
         if (!cv || reduceMotion) return;
@@ -86,7 +84,6 @@
         })();
     })();
 
-    /* ============================================================ sidebar slider () */
     const body = document.body, toggle = $('menu-toggle'), mq = window.matchMedia('(max-width: 900px)');
     function setNav(open, persist) {
         body.classList.toggle('nav-open', open);
@@ -100,7 +97,6 @@
     addEventListener('keydown', (e) => { if (e.key === 'Escape' && mq.matches) setNav(false); });
     $('logout-link').addEventListener('click', () => SM.auth.clear());
 
-    /* ============================================================ router: one section per page */
     const views = [...document.querySelectorAll('.view')];
     const ids = views.map((v) => v.id);
     const alias = { skills: 'progress' };
@@ -117,11 +113,11 @@
         $('view-sub').textContent = v.dataset.sub || '';
         document.title = 'SkillMatrix AI - ' + (v.dataset.title || '');
         scrollTo({ top: 0 });
+        if (id === 'profile') renderProfile();        // badges depend on arcade / timer progress
         if (mq.matches) setNav(false);
     }
     addEventListener('hashchange', route);
 
-    /* ============================================================ focus data (streak, minutes) */
     const focusLog = () => store.get('sm_focus', { days: {} });
     function addSession(minutes) {
         const log = focusLog(), k = todayKey(), d = log.days[k] || { sessions: 0, minutes: 0 };
@@ -138,15 +134,42 @@
         return { todaySessions: t.sessions, todayMinutes: t.minutes, sessions, minutes, streak };
     }
 
-    /* ============================================================ projects */
     const projectStore = () => store.get('sm_projects', {});
     const STATES = ['todo', 'doing', 'done'];
     const STATE_LABEL = { todo: 'Start project', doing: ' In progress', done: '✓ Done' };
+
+    const LANG_LABEL = { python: 'Python', html: 'HTML + CSS + JS', javascript: 'JavaScript', jsx: 'React (JSX)', tsx: 'React + TypeScript', java: 'Java', cpp: 'C++', sql: 'SQL', kotlin: 'Kotlin', bash: 'Shell', yaml: 'YAML', text: 'Steps' };
+    function closeCode() { const m = document.getElementById('code-modal'); if (m) m.remove(); }
+    SM.showCode = (title, entry) => {
+        closeCode();
+        const code = el('code', { text: entry.code });
+        const copy = el('button', { type: 'button', class: 'btn', text: 'Copy code' });
+        copy.addEventListener('click', async () => {
+            try { await navigator.clipboard.writeText(entry.code); }
+            catch (e) { const r = document.createRange(); r.selectNodeContents(code); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); document.execCommand('copy'); sel.removeAllRanges(); }
+            copy.textContent = 'Copied!'; setTimeout(() => { copy.textContent = 'Copy code'; }, 1600);
+        });
+        const close = el('button', { type: 'button', class: 'btn', text: 'Close' });
+        close.addEventListener('click', closeCode);
+        const modal = el('div', { class: 'modal', id: 'code-modal', role: 'dialog', 'aria-modal': 'true' },
+            el('div', { class: 'modal-box' },
+                el('div', { class: 'modal-head' },
+                    el('div', {}, el('h3', { text: title }), el('small', { text: 'Starter code - ' + (LANG_LABEL[entry.lang] || entry.lang) })),
+                    el('div', { class: 'modal-actions' }, copy, close)),
+                el('pre', { class: 'code-block' }, code),
+                el('p', { class: 'muted', text: 'This is a starting point, not the finished project. Read it line by line, run it, then add your own features.' })));
+        modal.addEventListener('click', (e) => { if (e.target === modal) closeCode(); });
+        document.body.append(modal);
+    };
+    addEventListener('keydown', (e) => { if (e.key === 'Escape') closeCode(); });
 
     SM.projectCard = (p) => {
         const saved = projectStore()[p.key];
         let st = saved ? saved.state : 'todo';
         const btn = el('button', { type: 'button', class: 'p-state s-' + st, text: STATE_LABEL[st] });
+        const starter = (window.SM_STARTERS || {})[p.key];
+        const starterBtn = el('button', { type: 'button', class: 'p-link code-btn', text: '</> Starter code' });
+        if (starter) starterBtn.addEventListener('click', () => SM.showCode(p.title, starter));
         btn.addEventListener('click', () => {
             st = STATES[(STATES.indexOf(st) + 1) % 3];
             const all = projectStore();
@@ -162,6 +185,7 @@
             p.note ? el('small', { text: p.note }) : null,
             p.features && p.features.length ? el('ul', { class: 'p-features' }, p.features.map((f) => el('li', { text: f }))) : null,
             el('div', { class: 'p-foot' },
+                starter ? starterBtn : null,
                 el('a', { class: 'p-link', href: SM.ytUrl(p.title + ' project tutorial'), target: '_blank', rel: 'noopener', text: 'Tutorial' }),
                 btn));
     };
@@ -222,7 +246,6 @@
     api.get('/catalog/projects').then((d) => { languages = d.languages; activeLang = languages[0].language; renderLanguages(); renderMoreProjects(); })
         .catch(() => { $('lang-projects').replaceChildren(el('p', { class: 'muted empty', text: 'Could not load sample projects. Is the backend running?' })); });
 
-    /* ============================================================ career tracks */
     let tracks = [], openTrack = null;
     const knownSkills = () => new Set(((state.profile && state.profile.skills) || []).map((s) => s.name.toLowerCase()));
 
@@ -277,7 +300,6 @@
     api.get('/catalog/tracks').then((d) => { tracks = d.tracks; renderTracks(); })
         .catch(() => { $('track-grid').replaceChildren(el('p', { class: 'muted empty', text: 'Could not load career tracks. Is the backend running?' })); });
 
-    /* ============================================================ free courses for roadmap */
     let courseKey = '';
     async function renderCourses() {
         const panel = $('free-courses'), r = state.roadmap;
@@ -296,7 +318,6 @@
         } catch (e) { courseKey = ''; panel.hidden = true; }
     }
 
-    /* ============================================================ focus timer (pomodoro) + focus mode */
     const RING = 2 * Math.PI * 104;
     const MODES = { focus: 'Focus', short: 'Short break', long: 'Long break' };
     const cfg = Object.assign({ focus: 25, short: 5, long: 15 }, store.get('sm_timer_cfg', {}));
@@ -390,8 +411,6 @@
             .map(([l, v]) => el('div', { class: 'stat-card' }, el('p', { text: l }), el('h2', { text: String(v) }))));
     }
     function renderStreak() { $('streak-count').textContent = focusTotals().streak; }
-
-    /* focus mode = full-screen distraction-free timer */
     function enterFocusMode() {
         body.classList.add('focus-mode');
         if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => { /* user denied */ });
@@ -407,8 +426,6 @@
         if (e.target.matches('input, select, textarea')) return;
         if (e.code === 'Space' && location.hash === '#focus') { e.preventDefault(); start(); }
     });
-
-    /* soft brown-noise for concentration */
     $('opt-noise').addEventListener('change', (e) => {
         try {
             audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
@@ -421,12 +438,10 @@
         } catch (err) { e.target.checked = false; SM.toast('Sound is not supported in this browser.'); }
     });
 
-    // resume a running timer after refresh
     if (T.running) {
         if (T.endAt <= Date.now()) { T.running = false; T.remaining = 0; setTimeout(finish, 0); } else tick = setInterval(loop, 250);
     }
 
-    /* ============================================================ dashboard cards */
     const TIPS = [
         'Small steps every day beat big plans on Sunday.',
         'Build one tiny project per skill - recruiters trust things you have actually made.',
@@ -478,9 +493,8 @@
             el('div', { class: 'detail-actions' }, el('a', { class: 'btn primary', href: '#focus', text: 'Start a session' })));
     }
 
-    /* ============================================================ AI mentor */
     const history = [];
-    const cleanReply = (t) => t.replace(/\*\*(.+?)\*\*/g, '$1').replace(/^\s*[*-]\s+/gm, '• ').replace(/`/g, '');
+    const cleanReply = (t) => t.replace(/\*\*(.+?)\*\*/g, '$1').replace(/^\s*[*-]\s+/gm, '• ').replace(/`/g, '').replace(/\s*[—–]\s*/g, ', ');
     function addMsg(who, text, tag) {
         const m = el('div', { class: 'msg ' + who }, text, tag ? el('small', { text: tag }) : null);
         $('chat-log').append(m); $('chat-log').scrollTop = $('chat-log').scrollHeight;
@@ -489,17 +503,26 @@
     async function ask(q) {
         q = q.trim(); if (!q) return;
         addMsg('me', q); $('chat-input').value = ''; $('chat-send').disabled = true;
-        const typing = addMsg('bot typing', ''); typing.append(el('span'), el('span'), el('span'));
+        const bubble = addMsg('bot typing', ''); bubble.append(el('span'), el('span'), el('span'));
+        let text = '', source = 'fallback', started = false;
+        const label = () => (source === 'ai' ? 'Gemini AI' : (source === 'kb' ? 'Instant built-in answer' : 'Built-in tip (AI offline)'));
         try {
-            const d = await api.post('/mentor', { question: q });
-            typing.remove();
-            addMsg('bot', cleanReply(d.reply), d.source === 'ai' ? ' Gemini AI' : 'Built-in tip (AI offline)');
+            await api.stream('/mentor/stream', { question: q }, (item) => {
+                if (item.source) source = item.source;
+                if (item.text) {
+                    if (!started) { started = true; bubble.className = 'msg bot'; bubble.textContent = ''; }
+                    text += item.text; bubble.textContent = cleanReply(text);
+                    $('chat-log').scrollTop = $('chat-log').scrollHeight;
+                }
+            });
+            if (!started) { bubble.className = 'msg bot'; bubble.textContent = 'No reply came back. Please try again.'; }
+            else bubble.append(el('small', { text: label() }));
         } catch (err) {
-            typing.remove(); addMsg('bot', ' ' + err.message);
-        } finally { $('chat-send').disabled = false; $('chat-input').focus(); }
+            bubble.className = 'msg bot'; bubble.textContent = '\u26a0 ' + err.message;
+        } finally { $('chat-send').disabled = false; $('chat-input').focus(); $('chat-log').scrollTop = $('chat-log').scrollHeight; }
     }
     $('chat-form').addEventListener('submit', (e) => { e.preventDefault(); ask($('chat-input').value); });
-    ['What should I learn first?', 'Explain my skill gaps simply', 'Suggest a weekend project', 'How do I prepare for internship interviews?']
+    ['What should I learn first?', 'Internship kaise milegi?', 'Resume tips', 'DSA kaise start karun?', 'Focus timer kaise use karun?', 'Interview ki taiyari']
         .forEach((q) => { const b = el('button', { type: 'button', text: q }); b.addEventListener('click', () => ask(q)); $('chat-suggest').append(b); });
     let greeted = false;
     function greet() {
@@ -507,7 +530,6 @@
         addMsg('bot', 'Hi ' + state.user.full_name.split(' ')[0] + '! I am your SkillMatrix AI mentor. Ask me about skills, projects, roadmaps or interviews - Hindi, English or Hinglish, all fine.');
     }
 
-    /* ============================================================ profile + badges */
     function renderProfile() {
         const box = $('profile-panel');
         if (!state.user || !state.profile) return;
@@ -526,13 +548,15 @@
         });
         const info = [['EMAIL', u.email || '-'], ['COURSE', p.course || 'Not set'], ['YEAR', p.year || 'Not set'],
             ['CAREER GOAL', a ? a.target.title : 'Not selected'], ['SKILLS ADDED', String(p.skills.length)], ['JOB MATCH', a ? Math.round(a.match_percent) + '%' : '-']];
-        const BADGE_ICONS = ['target', 'layers', 'map', 'check', 'medal', 'timer', 'flame', 'sparkle', 'code'];
+        const BADGE_ICONS = ['target', 'layers', 'map', 'check', 'medal', 'timer', 'flame', 'sparkle', 'code', 'gamepad', 'gamepad'];
+        const game = (SM.arcade && SM.arcade.state) || { played: 0, xp: 0 };
         const badges = [
             ['', 'First Analysis', 'Analyze your skills', !!a], ['', 'Skill Collector', 'Add 5+ skills', p.skills.length >= 5],
             ['', 'Roadmap Builder', 'Generate a roadmap', !!state.roadmap], ['', 'Halfway There', 'Reach 50% progress', pct >= 50],
             ['', 'Roadmap Master', 'Reach 100% progress', pct >= 100], ['', 'Focus Starter', 'Finish a focus session', f.sessions >= 1],
             ['', '3-Day Streak', 'Focus 3 days in a row', f.streak >= 3], ['', 'Deep Worker', '2 hours of focus', f.minutes >= 120],
-            ['', 'Builder', 'Finish a project', done >= 1]];
+            ['', 'Builder', 'Finish a project', done >= 1],
+            ['', 'Game Starter', 'Play a Code Arcade round', game.played >= 1], ['', 'Arcade Pro', 'Reach arcade level 3', Math.floor(game.xp / 120) + 1 >= 3]];
         box.replaceChildren(
             el('div', { class: 'profile-hero' },
                 el('div', { class: 'avatar', text: u.full_name.trim().charAt(0).toUpperCase() || 'S' }),
@@ -547,7 +571,6 @@
                 el('span', { class: 'b-ico' }, icon(BADGE_ICONS[badges.findIndex((b) => b[1] === name)] || 'medal')), el('strong', { text: name }), el('small', { text: ok ? 'Unlocked!' : how })))));
     }
 
-    /* ============================================================ glue */
     document.addEventListener('sm:render', () => {
         renderOverviewCards(); renderProfile(); renderTracks(); renderMoreProjects(); renderTaskPicker(); renderFocusStats(); renderStreak(); renderCourses(); greet();
     });

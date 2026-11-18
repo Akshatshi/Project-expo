@@ -1,0 +1,2 @@
+{ "name": "SkillMatrix AI", "short_name": "SkillMatrix", "start_url": "dashboard.html", "display": "standalone", "background_color": "#0b1020", "theme_color": "#0b1020",
+  "icons": [{ "src": "assets/logo-mark.png", "sizes": "any", "type": "image/png" }] }

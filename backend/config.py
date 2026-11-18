@@ -1,4 +1,3 @@
-"""Central configuration. All secrets come from environment variables / .env."""
 import os
 import secrets
 from pathlib import Path
@@ -14,7 +13,6 @@ load_dotenv(BASE_DIR / ".env")
 
 
 def _load_secret_key() -> str:
-    """Use SECRET_KEY from env; otherwise create one once and keep it on disk."""
     env_key = os.getenv("SECRET_KEY", "").strip()
     if env_key:
         return env_key
@@ -34,6 +32,7 @@ def _bool(name: str, default: bool) -> bool:
 
 class Config:
     SECRET_KEY = _load_secret_key()
+    DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
     DATABASE_PATH = str(
         (BASE_DIR / os.getenv("DATABASE_PATH", "instance/skillmatrix.db")).resolve()
     )
@@ -48,7 +47,11 @@ class Config:
     ]
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
     GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-flash-latest").strip()
-    AI_TIMEOUT_SECONDS = int(os.getenv("AI_TIMEOUT_SECONDS", "60"))
+    GEMINI_FALLBACK_MODEL = os.getenv("GEMINI_FALLBACK_MODEL", "gemini-flash-lite-latest").strip()
+    MENTOR_MODEL = os.getenv("MENTOR_MODEL", "gemini-flash-lite-latest").strip()
+    AI_MENTOR_TIMEOUT = int(os.getenv("AI_MENTOR_TIMEOUT", "8"))     # seconds to wait for the next piece of a mentor reply
+    AI_ASYNC = os.getenv("AI_ASYNC", "true").strip().lower() != "false"
+    AI_TIMEOUT_SECONDS = int(os.getenv("AI_TIMEOUT_SECONDS", "45"))
     DEV_MODE = _bool("DEV_MODE", True)
     TOKEN_MAX_AGE_SECONDS = 7 * 24 * 3600
     RESET_TOKEN_MAX_AGE_SECONDS = 30 * 60

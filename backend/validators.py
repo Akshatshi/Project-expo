@@ -1,4 +1,3 @@
-"""Input validation. Every function returns CLEAN data or raises ApiError(400)."""
 import re
 
 from errors import ApiError
@@ -139,7 +138,6 @@ def validate_custom_internship(raw):
 
 
 def validate_profile_payload(data, *, skills_required):
-    """Shared by /analysis and /profile."""
     require_json(data)
     out = {}
     if "skills" in data or skills_required:

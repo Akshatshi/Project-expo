@@ -1,4 +1,3 @@
-"""One consistent JSON error format: {"error": {"code", "message", "fields"?}}."""
 from flask import jsonify, request
 from werkzeug.exceptions import HTTPException
 

@@ -1,22 +1,9 @@
-"""Deterministic skill-matching logic. No AI is used here, so results are repeatable.
-
-Scoring
--------
-Every requirement has a *weight* (1-3 = how important) and a *min_level*
-(1 Beginner, 2 Intermediate, 3 Advanced = level an intern should have).
-A student's skill earns credit = min(student_level / min_level, 1).
-
-    match % = sum(weight * credit) / sum(weight) * 100
-
-credit == 1  -> "matched"   | 0 < credit < 1 -> "partial" | no skill -> "missing"
-"""
 import json
 from functools import lru_cache
 
 from config import DATA_DIR
 from validators import LEVEL_LABELS
 
-# alias (lowercase) -> canonical skill key (lowercase)
 ALIASES = {
     "js": "javascript", "java script": "javascript", "ecmascript": "javascript",
     "reactjs": "react", "react.js": "react", "react js": "react",
@@ -65,7 +52,6 @@ def load_catalog():
 
 @lru_cache(maxsize=1)
 def skill_display_names() -> dict:
-    """canonical key -> nicely written name, taken from the catalog."""
     names = {}
     for internship in load_catalog():
         for req in internship["required_skills"]:
@@ -93,7 +79,6 @@ def custom_requirements(custom: dict) -> list:
 
 
 def _student_index(skills: list) -> dict:
-    """key -> {name, level}; duplicates keep the highest level."""
     index = {}
     for s in skills:
         k = skill_key(s["name"])
@@ -168,7 +153,6 @@ def readiness_label(percent: float) -> str:
 
 
 def career_matches(skills: list, limit: int = 4) -> list:
-    """Match % of the student's skills against EVERY catalog internship."""
     rows = []
     for item in load_catalog():
         result = analyze(skills, item["required_skills"])
@@ -184,7 +168,6 @@ def career_matches(skills: list, limit: int = 4) -> list:
 
 
 def resolve_target(internship_id, custom):
-    """Return (title, requirements, internship_id, is_custom) or raise LookupError."""
     if custom:
         return custom["title"], custom_requirements(custom), None, True
     item = get_internship(internship_id) if internship_id else None

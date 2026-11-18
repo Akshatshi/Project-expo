@@ -19,7 +19,13 @@ SKILLS = [{"name": "html", "level": "advanced"}, {"name": "CSS", "level": "inter
 
 @pytest.fixture()
 def client(tmp_path):
-    app = create_app({"TESTING": True, "DATABASE_PATH": str(tmp_path / "t.db"),
+    import os
+    pg = os.getenv("TEST_DATABASE_URL", "")          # run: TEST_DATABASE_URL=postgresql://... pytest
+    if pg:
+        import psycopg
+        with psycopg.connect(pg) as c:
+            c.execute("DROP SCHEMA public CASCADE; CREATE SCHEMA public")
+    app = create_app({"TESTING": True, "AI_ASYNC": False, "DATABASE_PATH": str(tmp_path / "t.db"), "DATABASE_URL": pg,
                       "GEMINI_API_KEY": "", "DEV_MODE": True,
                       "CORS_ORIGINS": ["http://localhost:5500"]})
     return app.test_client()
@@ -32,12 +38,10 @@ def auth(client):
     return {"Authorization": "Bearer " + r.get_json()["token"]}
 
 
-# ------------------------------------------------ deterministic matcher
 def test_match_percent_is_exact():
     _, req, _, _ = matcher.resolve_target("web-developer", None)
     skills = [{"name": "html", "level": 3}, {"name": "CSS", "level": 2}, {"name": "js", "level": 1}, {"name": "Python", "level": 2}]
     res = matcher.analyze(skills, req)
-    # weights: HTML3+CSS3+JS3+React2+Resp2+Git1+REST2+PS1 = 17 ; earned = 3+3+1.5 = 7.5
     assert res["match_percent"] == 44.1
     assert [m["skill"] for m in res["matched"]] == ["HTML", "CSS"]
     assert [m["skill"] for m in res["partial"]] == ["JavaScript"]
@@ -78,7 +82,6 @@ def test_project_recommendation_targets_gaps():
     assert "Excel" not in covered  # already known
 
 
-# ------------------------------------------------ auth + validation
 def test_signup_validation_errors(client):
     bad = {**SIGNUP, "email": "nope", "password": "short", "confirm_password": "x", "user_id": "a b"}
     r = client.post("/api/auth/signup", json=bad)
@@ -123,7 +126,6 @@ def test_password_reset_flow(client):
     assert unknown.status_code == 200 and "dev_reset_link" not in unknown.get_json()
 
 
-# ------------------------------------------------ analysis -> roadmap -> progress
 def analyse(client, auth, **extra):
     payload = {"internship_id": "web-developer", "skills": SKILLS, "course": "B.Tech", "year": "2nd Year", **extra}
     return client.post("/api/analysis", json=payload, headers=auth)
@@ -214,7 +216,6 @@ def test_users_cannot_see_each_others_data(client, auth):
     assert client.post("/api/roadmap", json={"analysis_id": 1}, headers=h).status_code == 404
 
 
-# ------------------------------------------------ CORS + static
 def test_cors_headers(client):
     ok = client.options("/api/auth/login", headers={"Origin": "http://localhost:5500",
                         "Access-Control-Request-Method": "POST", "Access-Control-Request-Headers": "content-type,authorization"})
@@ -233,7 +234,7 @@ def test_catalog_and_mentor_fallback(client, auth):
     assert client.get("/api/catalog/resources").status_code == 400
     assert client.post("/api/mentor", json={"question": "x"}, headers=auth).status_code == 400
     ok = client.post("/api/mentor", json={"question": "What should I learn first?"}, headers=auth).get_json()
-    assert ok["source"] == "fallback" and ok["reply"]
+    assert ok["source"] == "kb" and ok["reply"]
 
 
 def test_gemini_request_shape(client, monkeypatch):
@@ -270,3 +271,179 @@ def test_roadmap_warning_explains_reason_in_dev_mode(client, auth, monkeypatch):
     app.config["DEV_MODE"] = False
     r = client.post("/api/roadmap", json={"weeks": 3}, headers=auth).get_json()
     assert "Reason" not in r["warning"]
+
+
+def test_postgres_translation_helpers():
+    import db
+    assert db.to_pg("SELECT * FROM users WHERE id = ? AND name LIKE '100%'") == "SELECT * FROM users WHERE id = %s AND name LIKE '100%%'"
+    stmts = db._pg_schema()
+    assert any("SERIAL PRIMARY KEY" in x for x in stmts) and not any("AUTOINCREMENT" in x or "datetime(" in x for x in stmts)
+
+
+def test_gemini_retries_without_thinking_on_400(client, monkeypatch):
+    import requests as rq
+    bodies = []
+
+    class R:
+        def __init__(self, code, text, data=None):
+            self.status_code, self.text, self._d = code, text, data or {}
+        def json(self): return self._d
+
+    def fake_post(url, headers=None, json=None, timeout=None):
+        bodies.append(json["generationConfig"].get("thinkingConfig"))
+        if len(bodies) == 1:
+            return R(400, "Unknown name thinkingLevel: thinking is not supported")
+        return R(200, "", {"candidates": [{"content": {"parts": [{"text": "ok"}]}}]})
+
+    monkeypatch.setattr(rq, "post", fake_post)
+    with client.application.app_context():
+        client.application.config["GEMINI_API_KEY"] = "k"
+        assert roadmap_ai.call_gemini("s", "u") == "ok"
+    assert bodies[0] == {"thinkingLevel": "minimal"} and bodies[1] == {"thinkingLevel": "low"}
+
+
+def test_unexpected_ai_crash_still_returns_fallback(client, auth, monkeypatch):
+    analyse(client, auth)
+    client.application.config["GEMINI_API_KEY"] = "k"
+    def boom(s, u): raise KeyError("weird")
+    monkeypatch.setattr(roadmap_ai, "call_gemini", boom)
+    r = client.post("/api/roadmap", json={"weeks": 3}, headers=auth)
+    assert r.status_code in (200, 201) and r.get_json()["roadmap"]["source"] == "fallback"
+    m = client.post("/api/mentor", json={"question": "help me please"}, headers=auth)
+    assert m.status_code == 200 and m.get_json()["source"] in ("kb", "fallback")
+
+
+def test_long_roadmap_is_built_in_parallel_chunks(client, auth, monkeypatch):
+    import re
+    analyse(client, auth)
+    client.application.config["GEMINI_API_KEY"] = "k"
+    prompts = []
+
+    def fake(system, user):
+        prompts.append(user)
+        m = re.search(r"weeks (\d+) to (\d+)", user)
+        a, b = int(m.group(1)), int(m.group(2))
+        weeks = [{"week": n, "title": f"W{n}", "focus_skills": ["Python"], "goal": "g",
+                  "tasks": ["t1", "t2", "t3"], "milestone": "m"} for n in range(a, b + 1)]
+        return json.dumps({"summary": "Nice plan." if a == 1 else "", "weeks": weeks})
+
+    monkeypatch.setattr(roadmap_ai, "call_gemini", fake)
+    r = client.post("/api/roadmap", json={"weeks": 8}, headers=auth).get_json()["roadmap"]
+    assert r["source"] == "ai" and [w["week"] for w in r["weeks"]] == list(range(1, 9))
+    assert r["summary"] == "Nice plan." and len(prompts) == 3
+
+
+def _wait_for_ai(client, auth, seconds=6):
+    import time
+    end = time.time() + seconds
+    while time.time() < end:
+        r = client.get("/api/roadmap/latest", headers=auth).get_json()["roadmap"]
+        if r["ai_status"] != "pending":
+            return r
+        time.sleep(0.1)
+    return r
+
+
+def test_background_roadmap_template_first_then_ai(client, auth, monkeypatch):
+    analyse(client, auth)
+    client.application.config.update(GEMINI_API_KEY="k", AI_ASYNC=True)
+    plan = {"summary": "AI summary.", "weeks": [{"week": n, "title": f"W{n}", "focus_skills": ["Python"], "goal": "g",
+            "tasks": ["a", "b", "c"], "milestone": "m"} for n in (1, 2, 3)]}
+    monkeypatch.setattr(roadmap_ai, "call_gemini", lambda s, u: json.dumps(plan))
+    first = client.post("/api/roadmap", json={"weeks": 3}, headers=auth)
+    assert first.status_code == 201 and first.get_json()["roadmap"]["ai_status"] in ("pending", "done")
+    final = _wait_for_ai(client, auth)
+    assert final["source"] == "ai" and final["ai_status"] == "done" and final["summary"] == "AI summary."
+
+
+def test_background_roadmap_failure_keeps_template(client, auth, monkeypatch):
+    analyse(client, auth)
+    client.application.config.update(GEMINI_API_KEY="k", AI_ASYNC=True, DEV_MODE=True)
+    def boom(s, u): raise roadmap_ai.RoadmapError("AI API returned HTTP 404: nope")
+    monkeypatch.setattr(roadmap_ai, "call_gemini", boom)
+    client.post("/api/roadmap", json={"weeks": 3}, headers=auth)
+    final = _wait_for_ai(client, auth)
+    assert final["source"] == "fallback" and final["ai_status"] == "failed" and "GEMINI_MODEL" in final["ai_note"]
+
+
+def test_model_fallback_on_timeout(client, monkeypatch):
+    import requests as rq
+    urls = []
+
+    class R:
+        status_code = 200
+        text = ""
+        def json(self): return {"candidates": [{"content": {"parts": [{"text": "hi"}]}}]}
+
+    def fake_post(url, headers=None, json=None, timeout=None):
+        urls.append(url)
+        if len(urls) == 1:
+            raise rq.exceptions.ReadTimeout("slow")
+        return R()
+
+    monkeypatch.setattr(rq, "post", fake_post)
+    with client.application.app_context():
+        client.application.config.update(GEMINI_API_KEY="k", GEMINI_MODEL="main-model", GEMINI_FALLBACK_MODEL="backup-model")
+        assert roadmap_ai.call_gemini("s", "u") == "hi"
+    assert "main-model" in urls[0] and "backup-model" in urls[1]
+
+
+def test_mentor_kb_answers_without_ai(client, auth):
+    for q, word in [("resume tips do", "1 page"), ("focus timer kaise use kare", "Pomodoro"), ("dsa kaise start karun", "LeetCode")]:
+        r = client.post("/api/mentor", json={"question": q}, headers=auth).get_json()
+        assert r["source"] == "kb" and word in r["reply"]
+    odd = client.post("/api/mentor", json={"question": "zzqx plmv wrtt"}, headers=auth).get_json()
+    assert odd["source"] == "fallback" and "resume tips" in odd["reply"]
+
+
+def test_mentor_kb_entries_are_well_formed():
+    import mentor_kb
+    assert len(mentor_kb.ENTRIES) >= 70
+    for keys, text in mentor_kb.ENTRIES:
+        assert keys.strip() and 20 < len(text) < 700
+
+
+def _stream_items(client, auth, question):
+    r = client.post("/api/mentor/stream", json={"question": question}, headers=auth)
+    assert r.status_code == 200 and r.mimetype == "application/x-ndjson"
+    return [json.loads(x) for x in r.get_data(as_text=True).strip().split("\n")]
+
+
+def test_mentor_stream_kb_ai_and_failure(client, auth, monkeypatch):
+    items = _stream_items(client, auth, "resume tips do")
+    assert items[0] == {"source": "kb"} and "1 page" in items[1]["text"] and items[-1] == {"done": True}
+
+    client.application.config["GEMINI_API_KEY"] = "k"
+    monkeypatch.setattr(roadmap_ai, "stream_gemini", lambda s, u, **kw: iter(["Hello ", "there"]))
+    items = _stream_items(client, auth, "zzqx plmv wrtt")
+    assert items[0] == {"source": "ai"} and "".join(i.get("text", "") for i in items) == "Hello there"
+
+    def broken(s, u, max_tokens=700):
+        raise roadmap_ai.RoadmapError("AI API returned HTTP 503: busy")
+        yield
+    monkeypatch.setattr(roadmap_ai, "stream_gemini", broken)
+    items = _stream_items(client, auth, "zzqx plmv wrtt")
+    assert items[0] == {"source": "fallback"} and items[-1] == {"done": True}
+
+
+def test_stream_gemini_parses_sse_and_retries_thinking(client, monkeypatch):
+    calls = []
+
+    class R:
+        def __init__(self, code, text="", lines=()):
+            self.status_code, self.text, self._lines = code, text, lines
+        def iter_lines(self, decode_unicode=True):
+            return iter(self._lines)
+
+    def fake_post(url, **kw):
+        calls.append(kw["json"]["generationConfig"].get("thinkingConfig"))
+        if len(calls) == 1:
+            return R(400, "thinking level not supported")
+        chunk = {"candidates": [{"content": {"parts": [{"text": "Hi"}]}}]}
+        return R(200, lines=["", "data: " + json.dumps(chunk), "data: " + json.dumps(chunk)])
+
+    monkeypatch.setattr(roadmap_ai._session, "post", fake_post)
+    with client.application.app_context():
+        client.application.config["GEMINI_API_KEY"] = "k"
+        assert "".join(roadmap_ai.stream_gemini("s", "u")) == "HiHi"
+    assert calls[0] == {"thinkingLevel": "minimal"} and calls[1] == {"thinkingLevel": "low"}

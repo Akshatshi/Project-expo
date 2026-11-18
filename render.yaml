@@ -5,7 +5,7 @@ services:
     runtime: python
     rootDir: backend
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 150
     envVars:
       - key: SECRET_KEY
         generateValue: true
@@ -13,5 +13,7 @@ services:
         sync: false          # you type this in the Render dashboard, never in code
       - key: GEMINI_MODEL
         value: gemini-flash-latest
+      - key: DATABASE_URL
+        sync: false          # paste your Neon/Supabase PostgreSQL URL in the Render dashboard
       - key: DEV_MODE
         value: "true"        # "true" = reset link is shown on screen (no email server). See README.

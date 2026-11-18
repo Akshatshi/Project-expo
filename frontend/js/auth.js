@@ -1,8 +1,6 @@
-/* Login, signup and account-recovery pages. */
 (function () {
     const { api, auth, el, setBusy, showMsg } = SM;
 
-    // backend field name -> input name on the page
     const FIELD_MAP = { full_name: 'fullname', user_id: 'userid', identifier: 'email' };
 
     function messageBox(form) {
@@ -29,8 +27,6 @@
             if (input) input.classList.add('field-error');
         });
     }
-
-    /* wraps a submit handler with busy state + error display */
     function handle(formId, busyText, fn) {
         const form = document.getElementById(formId);
         if (!form) return;

@@ -1,4 +1,3 @@
-/* Dashboard: loads everything from the backend and wires up analysis, roadmap and progress tracking. */
 (function () {
     const { api, auth, el, setBusy, showMsg } = SM;
     const $ = (id) => document.getElementById(id);
@@ -11,7 +10,6 @@
 
     if (!auth.token()) { location.replace('index.html'); return; }
 
-    // shared with js/extras.js
     SM.state = state;
     SM.ytUrl = (q) => 'https://www.youtube.com/results?search_query=' + encodeURIComponent(q) + '&sp=EgIQAw%253D%253D';
     SM.emit = (name) => document.dispatchEvent(new CustomEvent(name));
@@ -28,7 +26,6 @@
         })(t0);
     }
 
-    /* ------------------------------------------------------------ helpers */
     function pageMessage(text, type) {
         const box = $('page-msg');
         box.textContent = text || '';
@@ -42,7 +39,6 @@
         return false;
     }
 
-    /* ------------------------------------------------------------ render: header + stats */
     function renderHeader() {
         const name = state.user.full_name;
         $('user-name').textContent = name;
@@ -68,7 +64,6 @@
         countTo($('stat-projects'), a ? a.projects.length : 0, pad);
     }
 
-    /* ------------------------------------------------------------ render: skills */
     function renderSkills() {
         const skills = state.profile.skills;
         const bars = $('skill-bars'), tags = $('skill-tags');
@@ -88,7 +83,6 @@
         $('career-goal').textContent = goal;
     }
 
-    /* ------------------------------------------------------------ render: gap analysis */
     function renderAnalysis() {
         const a = state.analysis, list = $('gap-list'), summary = $('match-summary');
         list.replaceChildren();
@@ -97,6 +91,9 @@
         $('match-number').textContent = fmtPercent(a.match_percent);
         $('match-label').textContent = a.readiness + ' for ' + a.target.title;
         $('match-fill').style.width = Math.min(a.match_percent, 100) + '%';
+        const note = $('verify-note') || el('p', { id: 'verify-note', class: 'muted' });
+        note.textContent = a.verification && a.verification.length ? 'Verified by your Skill Test: ' + a.verification.map((v) => v.skill + ' ' + v.claimed + ' → ' + v.assessed).join(', ') + '. The match uses the tested level.' : '';
+        $('match-counts').after(note);
         $('match-counts').textContent = a.counts.matched + ' matched · ' + a.counts.partial + ' need improvement · ' + a.counts.missing + ' missing';
 
         const rows = [
@@ -110,7 +107,6 @@
             el('span', { class: 'status ' + cls, text }))));
     }
 
-    /* ------------------------------------------------------------ render: schedule + next steps */
     function currentWeek() {
         if (!state.roadmap) return null;
         return state.roadmap.weeks.find((w) => !w.done) || state.roadmap.weeks[state.roadmap.weeks.length - 1];
@@ -118,6 +114,7 @@
 
     function renderSchedule() {
         const box = $('schedule-list');
+        if (!box) return;
         box.replaceChildren();
         const week = currentWeek();
         if (!week) { box.append(emptyNote('Generate a roadmap to get your weekly schedule.')); return; }
@@ -153,7 +150,6 @@
         });
     }
 
-    /* ------------------------------------------------------------ render: projects + careers */
     function renderProjects() {
         const box = $('project-list'), a = state.analysis;
         box.replaceChildren();
@@ -172,7 +168,6 @@
             el('span', { class: 'match' + (c.match_percent >= 70 ? '' : ' explore'), text: c.match_percent >= 70 ? 'Good Match' : 'Explore This' }))));
     }
 
-    /* ------------------------------------------------------------ render: roadmap */
     function renderRoadmap() {
         const box = $('roadmap-list'), r = state.roadmap;
         box.replaceChildren();
@@ -183,9 +178,9 @@
             box.append(emptyNote('No roadmap yet.'));
             return;
         }
-        summary.append(r.summary, el('span', { class: 'tag-ai' + (r.source === 'ai' ? '' : ' fallback'), text: r.source === 'ai' ? 'AI generated' : 'Template' }),
-            state.analysis && r.analysis_id !== state.analysis.id ? el('br') : null,
-            state.analysis && r.analysis_id !== state.analysis.id ? 'Your skills changed since this roadmap was made - generate a new one.' : null);
+        const changed = state.analysis && r.analysis_id !== state.analysis.id;
+        summary.append(r.summary, ' ', el('span', { class: 'tag-ai' + (r.source === 'ai' ? '' : ' fallback'), text: r.source === 'ai' ? 'AI generated' : (r.ai_status === 'pending' ? 'Template - AI version loading...' : 'Template') }));
+        if (changed) summary.append(el('br'), 'Your skills changed since this roadmap was made - generate a new one.');
         const current = currentWeek();
         r.weeks.forEach((w) => {
             const cls = w.done ? 'done' : (w === current ? 'current' : '');
@@ -214,7 +209,6 @@
         SM.emit('sm:render');
     }
 
-    /* ------------------------------------------------------------ progress tracking */
     async function toggleTask(week, index, checkbox) {
         if (!state.roadmap) return;
         const wanted = checkbox.checked;
@@ -238,7 +232,6 @@
         await toggleTask(week, index, cb);
     };
 
-    /* ------------------------------------------------------------ analyze form */
     function renderChips() {
         const box = $('skill-chips');
         box.replaceChildren();
@@ -331,20 +324,52 @@
         } finally { setBusy(btn, false); }
     }
 
-    /* ------------------------------------------------------------ roadmap generation */
+    let pollTimer = null;
+    function watchAiRoadmap() {
+        clearInterval(pollTimer);
+        const first = state.roadmap, msg = $('roadmap-msg');
+        if (!first || first.ai_status !== 'pending') return;
+        showMsg(msg, 'Your roadmap is ready. AI is writing a personalised version in the background - you can keep using the app.', 'success');
+        let tries = 0;
+        pollTimer = setInterval(async () => {
+            tries += 1;
+            try {
+                const latest = (await api.get('/roadmap/latest')).roadmap;
+                if (!latest || latest.id !== first.id) { clearInterval(pollTimer); return; }
+                if (latest.ai_status !== 'pending') {
+                    clearInterval(pollTimer);
+                    state.roadmap = latest;
+                    renderStats(); renderSchedule(); renderNextSteps(); renderRoadmap();
+                    SM.emit('sm:render');
+                    if (latest.source === 'ai') {
+                        showMsg(msg, '');
+                        if (SM.toast) SM.toast('Your AI roadmap is ready');
+                        if (SM.confetti) SM.confetti(60);
+                    } else {
+                        showMsg(msg, 'AI could not finish this time, so you are using the template roadmap.' + (latest.ai_note ? ' [' + latest.ai_note + ']' : ''), 'error');
+                    }
+                } else if (tries > 70) {
+                    clearInterval(pollTimer);
+                    showMsg(msg, 'AI is taking too long. Keep using the template or press Generate again.', 'error');
+                }
+            } catch (e) { clearInterval(pollTimer); }
+        }, 3000);
+    }
+
     async function generateRoadmap() {
         const msg = $('roadmap-msg'), btn = $('roadmap-btn');
         showMsg(msg, '');
         if (!state.analysis) { showMsg(msg, 'Analyze your skills first.', 'error'); return; }
         const hours = parseInt($('roadmap-hours').value, 10);
         if (!Number.isInteger(hours) || hours < 1 || hours > 40) { showMsg(msg, 'Hours per week must be between 1 and 40.', 'error'); return; }
-        setBusy(btn, true, 'Generating (up to a minute)...');
+        setBusy(btn, true, 'Building your roadmap...');
         try {
             const data = await api.post('/roadmap', { analysis_id: state.analysis.id, weeks: parseInt($('roadmap-weeks').value, 10), hours_per_week: hours });
             state.roadmap = data.roadmap;
             renderStats(); renderSchedule(); renderNextSteps(); renderRoadmap();
             SM.emit('sm:render');
             if (data.warning) showMsg(msg, data.warning, 'error');
+            watchAiRoadmap();
         } catch (err) {
             if (onAuthFailure(err)) return;
             const fields = err.fields ? Object.values(err.fields) : [];
@@ -352,7 +377,6 @@
         } finally { setBusy(btn, false); }
     }
 
-    /* ------------------------------------------------------------ start */
     async function init() {
         $('logout-link').addEventListener('click', () => auth.clear());
         $('roadmap-btn').addEventListener('click', generateRoadmap);
@@ -363,6 +387,7 @@
             setupAnalyzeForm(skills.skills);
             SM.setupDone = true;
             renderAll();
+            watchAiRoadmap();
         } catch (err) {
             if (onAuthFailure(err)) return;
             pageMessage(err.message, 'error');

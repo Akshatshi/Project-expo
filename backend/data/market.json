@@ -1,0 +1,23 @@
+{
+  "updated": "2026-11",
+  "note": "Curated snapshot of what internship and fresher job posts commonly ask for. It is edited by hand, so review it monthly. The live panel next to it comes from a real job feed.",
+  "skills": [
+    {"skill": "Python", "tier": 3, "trend": "rising"}, {"skill": "SQL", "tier": 3, "trend": "steady"},
+    {"skill": "JavaScript", "tier": 3, "trend": "steady"}, {"skill": "Git", "tier": 3, "trend": "steady"},
+    {"skill": "React", "tier": 3, "trend": "steady"}, {"skill": "Data Structures", "tier": 3, "trend": "steady"},
+    {"skill": "TypeScript", "tier": 2, "trend": "rising"}, {"skill": "Machine Learning", "tier": 2, "trend": "rising"},
+    {"skill": "Generative AI / LLM APIs", "tier": 2, "trend": "rising"}, {"skill": "Docker", "tier": 2, "trend": "rising"},
+    {"skill": "REST APIs", "tier": 2, "trend": "steady"}, {"skill": "Node.js", "tier": 2, "trend": "steady"},
+    {"skill": "Cloud (AWS / Azure / GCP)", "tier": 2, "trend": "rising"}, {"skill": "Java", "tier": 2, "trend": "steady"},
+    {"skill": "Power BI / Tableau", "tier": 2, "trend": "steady"}, {"skill": "FastAPI / Flask", "tier": 2, "trend": "rising"},
+    {"skill": "Next.js", "tier": 1, "trend": "rising"}, {"skill": "Kubernetes", "tier": 1, "trend": "rising"},
+    {"skill": "Rust", "tier": 1, "trend": "rising"}, {"skill": "C++", "tier": 1, "trend": "steady"}
+  ],
+  "ai_internship": [
+    {"skill": "Python", "why": "Every AI role starts here"}, {"skill": "NumPy / Pandas", "why": "Cleaning and shaping data"},
+    {"skill": "SQL", "why": "Getting data out of databases"}, {"skill": "Statistics basics", "why": "Reading results correctly"},
+    {"skill": "Machine Learning", "why": "scikit-learn: regression, trees, evaluation"}, {"skill": "LLM APIs and prompting", "why": "Building apps on top of models"},
+    {"skill": "Git and GitHub", "why": "Showing work to recruiters"}, {"skill": "One real project", "why": "A deployed notebook or small web app"}
+  ],
+  "emerging": ["Retrieval-augmented generation (RAG)", "AI agents and tool use", "TypeScript everywhere", "Containers and Kubernetes basics", "Vector databases", "Edge and serverless deployment"]
+}

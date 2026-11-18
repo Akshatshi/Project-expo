@@ -1,8 +1,3 @@
-"""Static learning catalog: career tracks, language-wise sample projects and free YouTube resources.
-
-YouTube links are *search* links filtered to playlists (always valid, never dead) - the student picks the
-playlist they like. Hindi + English queries are given for every skill.
-"""
 from urllib.parse import quote_plus
 
 PLAYLIST_FILTER = "&sp=EgIQAw%253D%253D"  # YouTube search filter: Playlists only
@@ -13,7 +8,6 @@ def yt_playlist_search(query: str) -> str:
 
 
 def resources_for(skill: str) -> list:
-    """Free YouTube playlist searches (English + Hindi) + official free docs hint for one skill."""
     return [
         {"title": f"{skill} - full course (English)", "type": "YouTube playlist", "language": "English",
          "url": yt_playlist_search(f"{skill} full course for beginners")},

@@ -1,12 +1,14 @@
-"""All /api endpoints."""
 import json
 import logging
 import sqlite3
 from datetime import datetime, timedelta, timezone
 
-from flask import Blueprint, current_app, g, jsonify, request
+from flask import Blueprint, current_app, g, jsonify, request, Response, stream_with_context
 
+import assessment
 import catalog
+import linkedin
+import market
 import matcher
 import projects as project_service
 import roadmap_ai
@@ -21,11 +23,9 @@ from validators import (LEVEL_LABELS, fail, require_json, validate_int, validate
 api = Blueprint("api", __name__, url_prefix="/api")
 log = logging.getLogger(__name__)
 
-# a hash of a random password, used so unknown users cost the same time as known ones
 _DUMMY_HASH = hash_password("not-a-real-password")
 
 
-# ---------------------------------------------------------------- helpers
 def body() -> dict:
     return require_json(request.get_json(silent=True))
 
@@ -57,7 +57,6 @@ def raw_profile_skills(user_id: int) -> list:
 
 
 def save_profile(user_id, *, skills=None, course=None, year=None, internship_id=None, custom=None, set_target=False):
-    """Insert or update. Only fields that are not None are changed."""
     db = get_db()
     existing = db.execute("SELECT * FROM profiles WHERE user_id = ?", (user_id,)).fetchone()
     cur = dict(existing) if existing else {
@@ -112,6 +111,8 @@ def roadmap_dict(row) -> dict | None:
         weeks.append({**w, "tasks": tasks, "completed_tasks": week_done, "done": week_done == len(tasks)})
     return {
         "id": row["id"], "analysis_id": row["analysis_id"], "source": row["source"], "model": row["model"],
+        "ai_status": row["ai_status"] or ("done" if row["source"] == "ai" else "off"),
+        "ai_note": row["ai_note"] if current_app.config.get("DEV_MODE") else None,
         "hours_per_week": row["hours_per_week"], "summary": row["summary"], "created_at": row["created_at"],
         "weeks": weeks,
         "progress": {"completed_tasks": completed, "total_tasks": total,
@@ -135,7 +136,57 @@ def owned_roadmap(user_id, roadmap_id):
     return row
 
 
-# ---------------------------------------------------------------- meta
+import re as _re
+
+CLIENT_KEY = _re.compile(r"^sm_[a-z0-9_]{1,40}$")
+
+
+def data_get(uid, key, default=None):
+    row = get_db().execute("SELECT value FROM user_data WHERE user_id = ? AND key = ?", (uid, key)).fetchone()
+    return json.loads(row["value"]) if row else default
+
+
+def data_set(uid, key, value):
+    get_db().execute(
+        "INSERT INTO user_data (user_id, key, value, updated_at) VALUES (?, ?, ?, ?) "
+        "ON CONFLICT(user_id, key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at",
+        (uid, key, json.dumps(value, ensure_ascii=False), now_iso()))
+
+
+def record_results(uid, results):
+    db = get_db()
+    weak = [w for w in data_get(uid, "sys_weak", []) if w in assessment.bank()]
+    for qid, ok in results:
+        db.execute("INSERT INTO question_stats (question_id, attempts, correct) VALUES (?, 1, ?) "
+                   "ON CONFLICT(question_id) DO UPDATE SET attempts = question_stats.attempts + 1, correct = question_stats.correct + ?",
+                   (qid, int(ok), int(ok)))
+        if ok and qid in weak:
+            weak.remove(qid)
+        elif not ok and qid not in weak:
+            weak.append(qid)
+    data_set(uid, "sys_weak", weak[-60:])
+
+
+def weak_topics(uid):
+    bank = assessment.bank()
+    ids = [w for w in data_get(uid, "sys_weak", []) if w in bank][-12:]
+    out = {}
+    for qid in ids:
+        out.setdefault(bank[qid]["lang"], []).append(bank[qid]["q"][:80])
+    return [{"skill": assessment.LANG_SKILL[k], "missed": v[:3]} for k, v in out.items()]
+
+
+def latest_assessments(user_id):
+    rows = get_db().execute(
+        "SELECT * FROM assessments WHERE user_id = ? AND status = 'done' ORDER BY id DESC", (user_id,)).fetchall()
+    seen, out = set(), []
+    for r in rows:
+        if r["lang"] not in seen:
+            seen.add(r["lang"])
+            out.append(r)
+    return out
+
+
 @api.get("/health")
 def health():
     return jsonify({"status": "ok", "ai_configured": bool(current_app.config["GEMINI_API_KEY"])})
@@ -156,7 +207,6 @@ def list_skills():
     return jsonify({"skills": matcher.known_skill_names(), "levels": list(LEVEL_LABELS.values())})
 
 
-# ---------------------------------------------------------------- auth
 @api.post("/auth/signup")
 def signup():
     data = validate_signup(body())
@@ -206,7 +256,6 @@ def forgot_password():
                    (hash_reset_token(token), user["id"], expires.isoformat(timespec="seconds")))
         db.commit()
         link = f"{request.host_url}reset-password.html?token={token}"
-        # No email server in this project: the link is printed in the console.
         log.warning("PASSWORD RESET LINK for %s: %s", email, link)
         if current_app.config["DEV_MODE"]:
             result["dev_reset_link"] = link
@@ -241,7 +290,6 @@ def forgot_userid():
     return jsonify(result)
 
 
-# ---------------------------------------------------------------- profile
 @api.get("/profile")
 @login_required
 def get_profile():
@@ -272,7 +320,6 @@ def update_profile():
     return jsonify({"user": public_user(user), "profile": profile_dict(g.user["id"])})
 
 
-# ---------------------------------------------------------------- analysis
 @api.post("/analysis")
 @login_required
 def create_analysis():
@@ -286,10 +333,19 @@ def create_analysis():
         fail({"internship_id": "Unknown internship."})
 
     skills = clean["skills"]
-    result = matcher.analyze(skills, requirements)
+    verified = assessment.verified_levels(latest_assessments(g.user["id"]))
+    effective, verification = [], []
+    for s in skills:
+        v = verified.get(matcher.skill_key(s["name"]))
+        if v and v["level"] < s["level"]:
+            verification.append({"skill": s["name"], "claimed": LEVEL_LABELS[s["level"]], "assessed": LEVEL_LABELS[v["level"]], "score": v["pct"]})
+            s = {**s, "level": v["level"]}
+        effective.append(s)
+    result = matcher.analyze(effective, requirements)
+    result["verification"] = verification
     result["target"] = {"internship_id": resolved_id, "title": title, "custom": is_custom}
     result["projects"] = project_service.recommend(result, requirements)
-    result["career_matches"] = matcher.career_matches(skills)
+    result["career_matches"] = matcher.career_matches(effective)
 
     db = get_db()
     save_profile(g.user["id"], skills=skills, course=clean["course"], year=clean["year"],
@@ -320,7 +376,6 @@ def analysis_history():
     return jsonify({"history": [dict(r) for r in rows]})
 
 
-# ---------------------------------------------------------------- roadmap
 @api.post("/roadmap")
 @login_required
 def create_roadmap():
@@ -340,12 +395,23 @@ def create_roadmap():
         raise ApiError(404, "analysis_not_found", "Analyse your skills first, then generate a roadmap.")
 
     analysis = json.loads(row["result_json"])
-    plan = roadmap_ai.generate(analysis["target"]["title"], analysis, profile_dict(g.user["id"]), weeks, hours)
+    title, profile = analysis["target"]["title"], profile_dict(g.user["id"])
+    cfg = current_app.config
+    background = bool(cfg["GEMINI_API_KEY"]) and cfg.get("AI_ASYNC")
+    if background:
+        plan = roadmap_ai.fallback_roadmap(title, analysis, weeks, hours)
+        plan.update(source="fallback", model=None, warning=None)
+        status = "pending"
+    else:
+        plan = roadmap_ai.generate(title, analysis, profile, weeks, hours)
+        status = "done" if plan["source"] == "ai" else "off"
     cur = db.execute(
-        """INSERT INTO roadmaps (user_id, analysis_id, source, model, hours_per_week, summary, weeks_json)
-           VALUES (?, ?, ?, ?, ?, ?, ?)""",
-        (g.user["id"], row["id"], plan["source"], plan["model"], hours, plan["summary"], json.dumps(plan["weeks"])))
+        """INSERT INTO roadmaps (user_id, analysis_id, source, model, hours_per_week, summary, weeks_json, ai_status)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+        (g.user["id"], row["id"], plan["source"], plan["model"], hours, plan["summary"], json.dumps(plan["weeks"]), status))
     db.commit()
+    if background:
+        roadmap_ai.upgrade_in_background(current_app._get_current_object(), cur.lastrowid, title, analysis, profile, weeks, hours)
     created = db.execute("SELECT * FROM roadmaps WHERE id = ?", (cur.lastrowid,)).fetchone()
     return jsonify({"roadmap": roadmap_dict(created), "warning": plan["warning"]}), 201
 
@@ -356,7 +422,6 @@ def get_latest_roadmap():
     return jsonify({"roadmap": roadmap_dict(owned_roadmap(g.user["id"], None))})
 
 
-# ---------------------------------------------------------------- progress
 @api.get("/progress")
 @login_required
 def get_progress():
@@ -391,7 +456,6 @@ def update_progress():
     return jsonify({"roadmap": roadmap_dict(row)})
 
 
-# ---------------------------------------------------------------- catalog (tracks, language projects, resources)
 @api.get("/catalog/tracks")
 def catalog_tracks():
     return jsonify({"tracks": catalog.tracks_with_resources()})
@@ -415,10 +479,7 @@ def catalog_resources():
     return jsonify({"resources": [{"skill": n, "items": catalog.resources_for(n)} for n in names]})
 
 
-# ---------------------------------------------------------------- AI mentor
-@api.post("/mentor")
-@login_required
-def mentor():
+def mentor_input():
     data = body()
     question = " ".join(str(data.get("question", "")).split())
     if not 2 <= len(question) <= 500:
@@ -431,11 +492,33 @@ def mentor():
         "target": analysis["target"]["title"] if analysis else None,
         "match_percent": analysis["match_percent"] if analysis else None,
         "top_gaps": (analysis["gaps_priority"][:5] if analysis else []),
+        "weak_topics": weak_topics(g.user["id"]),
     }
+    return question, context
+
+
+@api.post("/mentor")
+@login_required
+def mentor():
+    question, context = mentor_input()
     return jsonify(roadmap_ai.mentor_reply(question, context))
 
 
-# ---------------------------------------------------------------- dashboard (one call for the page)
+@api.post("/mentor/stream")
+@login_required
+def mentor_stream():
+    question, context = mentor_input()
+
+    def lines():
+        for item in roadmap_ai.mentor_stream(question, context):
+            yield json.dumps(item, ensure_ascii=False) + "\n"
+
+    resp = Response(stream_with_context(lines()), mimetype="application/x-ndjson")
+    resp.headers["Cache-Control"] = "no-cache"
+    resp.headers["X-Accel-Buffering"] = "no"        # tell nginx style proxies not to hold the stream back
+    return resp
+
+
 @api.get("/dashboard")
 @login_required
 def dashboard():
@@ -446,3 +529,270 @@ def dashboard():
         "analysis": analysis_dict(latest_analysis_row(uid)),
         "roadmap": roadmap_dict(latest_roadmap_row(uid)),
     })
+
+
+# skill assessment
+@api.post("/assessment/start")
+@login_required
+def assessment_start():
+    data = body()
+    lang = str(data.get("lang", "")).lower()
+    if lang not in assessment.LANG_SKILL:
+        fail({"lang": "Choose one of: " + ", ".join(assessment.langs()) + "."})
+    claim = validate_int({"claim": data.get("claim", 2)}, "claim", default=2, lo=1, hi=3)
+    db = get_db()
+    old = db.execute("SELECT paper_json FROM assessments WHERE user_id = ? AND lang = ? ORDER BY id DESC LIMIT 6",
+                     (g.user["id"], lang)).fetchall()
+    seen = {q["id"] for r in old for q in json.loads(r["paper_json"])["questions"]}
+    rows = assessment.pick(lang, claim, seen)
+    orders = [assessment.shuffled(r) for r in rows]
+    task, keywords = __import__("random").choice(assessment.PRACTICAL[lang])
+    paper = {"questions": [{"id": r["id"], "order": o} for r, o in zip(rows, orders)], "task": task, "keywords": keywords}
+    cur = db.execute("INSERT INTO assessments (user_id, lang, claim, paper_json, started_at) VALUES (?, ?, ?, ?, ?)",
+                     (g.user["id"], lang, claim, json.dumps(paper), now_iso()))
+    db.commit()
+    return jsonify({"id": cur.lastrowid, "lang": lang, "claim": claim, "task": task, "min_seconds": assessment.MIN_SECONDS,
+                    "questions": [assessment.public_question(r, o, i + 1) for i, (r, o) in enumerate(zip(rows, orders))]}), 201
+
+
+@api.post("/assessment/<int:aid>/submit")
+@login_required
+def assessment_submit(aid):
+    data = body()
+    db = get_db()
+    row = db.execute("SELECT * FROM assessments WHERE id = ? AND user_id = ?", (aid, g.user["id"])).fetchone()
+    if row is None:
+        raise ApiError(404, "assessment_not_found", "This test was not found.")
+    if row["status"] == "done":
+        raise ApiError(409, "already_submitted", "This test was already submitted. Start a new one.")
+    waited = (datetime.now(timezone.utc) - datetime.fromisoformat(row["started_at"])).total_seconds()
+    if waited < assessment.MIN_SECONDS:
+        raise ApiError(400, "too_fast", f"Please read the questions properly. Submit after {assessment.MIN_SECONDS} seconds.")
+    answers = data.get("answers")
+    if not isinstance(answers, list) or len(answers) > 20:
+        fail({"answers": "Send one answer per question."})
+    paper = json.loads(row["paper_json"])
+    bank, got, total, by_level, review = assessment.bank(), 0, 0, [[0, 0], [0, 0], [0, 0]], []
+    for i, item in enumerate(paper["questions"]):
+        q = bank[item["id"]]
+        pick = answers[i] if i < len(answers) else None
+        shown_correct = item["order"].index(0)
+        ok = isinstance(pick, int) and not isinstance(pick, bool) and pick == shown_correct
+        weight = q["level"] + 1
+        total += weight
+        by_level[q["level"]][1] += 1
+        if ok:
+            got += weight
+            by_level[q["level"]][0] += 1
+        review.append({"q": q["q"], "ok": ok, "answer": q["options"][0], "why": q["why"]})
+    record_results(g.user["id"], [(item["id"], rv["ok"]) for item, rv in zip(paper["questions"], review)])
+    practical = assessment.grade_practical(current_app.config, row["lang"], paper["task"], paper["keywords"], str(data.get("practical", "")))
+    total += 2
+    if practical["score"] >= 60:
+        got += 2
+    pct = round(got / total * 100)
+    level = assessment.level_from_pct(pct)
+    result = {"score": got, "max": total, "pct": pct, "level": level, "level_label": LEVEL_LABELS[level],
+              "claimed": LEVEL_LABELS[row["claim"]], "by_level": by_level, "review": review, "practical": practical}
+    db.execute("UPDATE assessments SET status = 'done', submitted_at = ?, result_json = ? WHERE id = ?",
+               (now_iso(), json.dumps(result), aid))
+    db.commit()
+    return jsonify({"result": result})
+
+
+@api.get("/assessment/summary")
+@login_required
+def assessment_summary():
+    rows = latest_assessments(g.user["id"])
+    skills = []
+    for r in rows:
+        res = json.loads(r["result_json"])
+        skills.append({"lang": r["lang"], "skill": assessment.LANG_SKILL[r["lang"]], "claimed": LEVEL_LABELS[r["claim"]],
+                       "assessed": LEVEL_LABELS[res["level"]], "pct": res["pct"], "at": r["submitted_at"]})
+    return jsonify({"skills": skills})
+
+
+@api.get("/leaderboard")
+@login_required
+def leaderboard():
+    rows = get_db().execute(
+        """SELECT a.user_id, a.result_json, u.full_name FROM assessments a JOIN users u ON u.id = a.user_id
+           WHERE a.status = 'done' ORDER BY a.id DESC LIMIT 500""").fetchall()
+    best = {}
+    for r in rows:
+        pct = json.loads(r["result_json"])["pct"]
+        entry = best.setdefault(r["user_id"], {"name": r["full_name"], "best": 0, "tests": 0})
+        entry["best"], entry["tests"] = max(entry["best"], pct), entry["tests"] + 1
+    top = sorted(best.items(), key=lambda kv: (-kv[1]["best"], -kv[1]["tests"]))[:10]
+    out = []
+    for uid, e in top:
+        parts = e["name"].split()
+        out.append({"name": parts[0] + (" " + parts[-1][0] + "." if len(parts) > 1 else ""), "best": e["best"], "tests": e["tests"], "you": uid == g.user["id"]})
+    return jsonify({"leaderboard": out})
+
+
+# job market
+@api.get("/market")
+def market_data():
+    return jsonify({"snapshot": market.snapshot(), "live": market.live()})
+
+
+# linkedin
+@api.post("/linkedin/draft")
+@login_required
+def linkedin_draft():
+    data = body()
+    role = " ".join(str(data.get("role", "")).split())[:80]
+    skills = [" ".join(str(x).split())[:40] for x in (data.get("skills") or [])][:12]
+    if not role or not skills:
+        fail({"role": "Give a target role and at least one skill."})
+    if not current_app.config["GEMINI_API_KEY"]:
+        raise ApiError(503, "ai_unavailable", "AI is not configured on this server, so the template version is shown.")
+    facts = {"name": g.user["full_name"], "role": role, "skills": skills, "course": str(data.get("course", ""))[:80],
+             "college": str(data.get("college", ""))[:80], "city": str(data.get("city", ""))[:60],
+             "projects": [{"name": str(p.get("name", ""))[:80], "detail": str(p.get("detail", ""))[:300]} for p in (data.get("projects") or [])[:2] if isinstance(p, dict)],
+             "certificate": str(data.get("certificate", ""))[:100]}
+    try:
+        return jsonify(linkedin.draft(facts))
+    except Exception as exc:
+        log.warning("LinkedIn draft failed: %s", exc)
+        raise ApiError(503, "ai_unavailable", "AI could not write the draft right now. The template version is shown.")
+
+
+# per-user saved data (resume, notes, tracker, game scores) so it follows the student across devices
+@api.get("/data")
+@login_required
+def data_all():
+    rows = get_db().execute("SELECT key, value FROM user_data WHERE user_id = ? AND key LIKE 'sm_%'", (g.user["id"],)).fetchall()
+    return jsonify({"data": {r["key"]: json.loads(r["value"]) for r in rows}})
+
+
+@api.put("/data/<key>")
+@login_required
+def data_put(key):
+    if not CLIENT_KEY.match(key):
+        fail({"key": "Invalid key."})
+    value = body().get("value")
+    if len(json.dumps(value)) > 300_000:
+        raise ApiError(413, "too_large", "This item is too large to save.")
+    count = get_db().execute("SELECT COUNT(*) AS n FROM user_data WHERE user_id = ? AND key LIKE 'sm_%'", (g.user["id"],)).fetchone()["n"]
+    if count >= 80 and data_get(g.user["id"], key) is None:
+        raise ApiError(409, "too_many", "Too many saved items.")
+    data_set(g.user["id"], key, value)
+    get_db().commit()
+    return jsonify({"saved": True})
+
+
+@api.delete("/data/<key>")
+@login_required
+def data_delete(key):
+    if CLIENT_KEY.match(key):
+        get_db().execute("DELETE FROM user_data WHERE user_id = ? AND key = ?", (g.user["id"], key))
+        get_db().commit()
+    return jsonify({"deleted": True})
+
+
+# privacy: export everything we hold, or delete the account
+@api.get("/account/export")
+@login_required
+def account_export():
+    db, uid = get_db(), g.user["id"]
+    rows = lambda sql: [dict(r) for r in db.execute(sql, (uid,)).fetchall()]
+    return jsonify({
+        "account": {"full_name": g.user["full_name"], "email": g.user["email"], "user_id": g.user["user_id"]},
+        "profile": profile_dict(uid), "analyses": rows("SELECT * FROM analyses WHERE user_id = ?"),
+        "roadmaps": rows("SELECT * FROM roadmaps WHERE user_id = ?"),
+        "assessments": rows("SELECT id, lang, claim, status, started_at, submitted_at, result_json FROM assessments WHERE user_id = ?"),
+        "saved_data": {r["key"]: json.loads(r["value"]) for r in db.execute("SELECT key, value FROM user_data WHERE user_id = ? AND key LIKE 'sm_%'", (uid,)).fetchall()}})
+
+
+@api.delete("/account")
+@login_required
+def account_delete():
+    row = get_db().execute("SELECT password_hash FROM users WHERE id = ?", (g.user["id"],)).fetchone()
+    if not verify_password(row["password_hash"], str(body().get("password", ""))):
+        raise ApiError(403, "wrong_password", "Password is not correct.")
+    get_db().execute("DELETE FROM users WHERE id = ?", (g.user["id"],))
+    get_db().commit()
+    return jsonify({"deleted": True})
+
+
+# what-if simulator: how much would the match change if the student learned one more skill?
+@api.post("/simulate")
+@login_required
+def simulate():
+    clean = validate_profile_payload(body(), skills_required=True)
+    if not clean["internship_id"] and not clean["custom_internship"]:
+        fail({"internship_id": "Choose a target internship."})
+    try:
+        title, requirements, _, _ = matcher.resolve_target(clean["internship_id"], clean["custom_internship"])
+    except LookupError:
+        fail({"internship_id": "Unknown internship."})
+    add = body().get("add") or {}
+    name = " ".join(str(add.get("name", "")).split())[:60]
+    level = validate_int({"level": add.get("level", 2)}, "level", default=2, lo=1, hi=3)
+    if not name:
+        fail({"add": "Choose a skill to simulate."})
+    before = matcher.analyze(clean["skills"], requirements)
+    after = matcher.analyze(clean["skills"] + [{"name": name, "level": level}], requirements)
+    return jsonify({"target": title, "skill": name, "level": LEVEL_LABELS[level], "before": before["match_percent"], "after": after["match_percent"],
+                    "gain": round(after["match_percent"] - before["match_percent"], 1)})
+
+
+# question health: shows questions that are too easy or too hard so the bank can be tuned
+@api.get("/assessment/quality")
+@login_required
+def question_quality():
+    bank = assessment.bank()
+    rows = get_db().execute("SELECT * FROM question_stats WHERE attempts >= 5").fetchall()
+    out = []
+    for r in rows:
+        if r["question_id"] in bank:
+            pct = round(r["correct"] / r["attempts"] * 100)
+            flag = "too easy" if pct >= 95 else "too hard or unclear" if pct <= 15 else ""
+            out.append({"q": bank[r["question_id"]]["q"], "lang": bank[r["question_id"]]["lang"], "level": bank[r["question_id"]]["level"], "attempts": r["attempts"], "correct_pct": pct, "flag": flag})
+    return jsonify({"questions": sorted(out, key=lambda x: x["correct_pct"])[:40], "total_tracked": len(out)})
+
+
+# daily practice built from the questions this student got wrong before
+@api.get("/practice/daily")
+@login_required
+def practice_daily():
+    uid, today = g.user["id"], datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    paper = data_get(uid, "sys_practice")
+    if not paper or paper["date"] != today or paper.get("done"):
+        if paper and paper["date"] == today and paper.get("done"):
+            return jsonify({"done": True, "questions": []})
+        bank = assessment.bank()
+        ids = [w for w in data_get(uid, "sys_weak", []) if w in bank]
+        random_ids = list(bank)
+        __import__("random").shuffle(random_ids)
+        picked = (__import__("random").sample(ids, min(5, len(ids))) + [i for i in random_ids if i not in ids])[:5]
+        paper = {"date": today, "done": False, "items": [{"id": i, "order": assessment.shuffled(bank[i])} for i in picked]}
+        data_set(uid, "sys_practice", paper)
+        get_db().commit()
+    bank = assessment.bank()
+    return jsonify({"done": False, "from_weak": len([i for i in paper["items"] if i["id"] in data_get(uid, "sys_weak", [])]),
+                    "questions": [assessment.public_question(bank[i["id"]], i["order"], n + 1) for n, i in enumerate(paper["items"])]})
+
+
+@api.post("/practice/check")
+@login_required
+def practice_check():
+    uid = g.user["id"]
+    paper = data_get(uid, "sys_practice")
+    if not paper or paper.get("done"):
+        raise ApiError(409, "no_practice", "Open today's practice first.")
+    answers, bank, review = body().get("answers"), assessment.bank(), []
+    if not isinstance(answers, list):
+        fail({"answers": "Send one answer per question."})
+    for n, item in enumerate(paper["items"]):
+        pick = answers[n] if n < len(answers) else None
+        ok = isinstance(pick, int) and not isinstance(pick, bool) and pick == item["order"].index(0)
+        q = bank[item["id"]]
+        review.append({"q": q["q"], "ok": ok, "answer": q["options"][0], "why": q["why"]})
+    record_results(uid, [(i["id"], rv["ok"]) for i, rv in zip(paper["items"], review)])
+    paper["done"] = True
+    data_set(uid, "sys_practice", paper)
+    get_db().commit()
+    return jsonify({"score": sum(1 for r in review if r["ok"]), "total": len(review), "review": review})
