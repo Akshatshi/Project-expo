@@ -1,6 +1,6 @@
 // Run: npm i jsdom && node tests/smoke.js   (checks every Career Kit page, the test flow and both games)
 const { JSDOM } = require('jsdom'), fs = require('fs'), path = require('path'), J = path.join(__dirname, '..', 'js') + '/';
-const ids = ['skilltest', 'resume', 'ats', 'linkedin', 'interview', 'notes', 'market', 'tracker', 'simulator', 'company', 'cover', 'privacy', 'games'];
+const ids = ['skilltest', 'resume', 'ats', 'linkedin', 'interview', 'notes', 'market', 'simulator', 'company', 'cover', 'privacy', 'games'];
 const dom = new JSDOM('<body>' + ids.map((i) => '<div id="v-' + i + '"></div>').join('') + '</body>', { runScripts: 'outside-only', url: 'http://x/#skilltest' });
 const w = dom.window; let failed = 0;
 const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); if (!c) failed++; };
@@ -14,7 +14,7 @@ const answers = { '/assessment/start': { id: 1, lang: 'python', claim: 2, task: 
     '/practice/daily': { done: false, from_weak: 2, questions: qs.slice(0, 5) }, '/practice/check': { score: 4, total: 5, review: [{ q: 'Q', ok: true, answer: 'a', why: 'w' }] }, '/simulate': { target: 'Web', skill: 'JavaScript', level: 'Intermediate', before: 40, after: 65, gain: 25 },
     '/assessment/1/submit': { result: { pct: 80, level: 3, level_label: 'Advanced', claimed: 'Intermediate', by_level: [[3, 3], [3, 3], [1, 4]], review: [{ q: 'Q', ok: true, answer: 'a', why: 'w' }], practical: { score: 70, feedback: 'ok', source: 'rubric' } } } };
 w.fetch = async (url) => ({ ok: true, status: 200, json: async () => answers[String(url).replace(/^.*\/api/, '').split('?')[0]] || {} });
-for (const f of ['api.js', 'sync.js', 'arcade-data.js', 'qbank.js', 'qbank2.js', 'qbank3.js', 'kit-data.js']) w.eval(fs.readFileSync(J + f, 'utf8'));
+for (const f of ['api.js', 'sync.js', 'arcade-data.js', 'qbank.js', 'qbank2.js', 'qbank3.js', 'kit-data.js', 'notes-data.js']) w.eval(fs.readFileSync(J + f, 'utf8'));
 w.SM.state = { user: { full_name: 'Rahul Verma', email: 'r@x.com' }, profile: { skills: [{ name: 'Python', level: 'Beginner' }] } };
 w.eval(fs.readFileSync(J + 'games.js', 'utf8')); w.eval(fs.readFileSync(J + 'tools.js', 'utf8'));
 const doc = w.document, wait = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -29,7 +29,8 @@ const btn = (root, re) => [...root.querySelectorAll('button')].find((b) => re.te
     await go('#ats'); const a = doc.getElementById('v-ats'); a.querySelector('textarea').value = 'Rahul r@x.com 9876543210 github.com/r Education Skills Projects Experience built developed improved 40% 200 users '.repeat(6);
     btn(a, /Check my resume/).click(); ok(!!a.querySelector('.k-ring text'), 'ATS score drawn');
     await go('#linkedin'); const l = doc.getElementById('v-linkedin'); btn(l, /Generate \(template\)/).click(); ok(l.querySelectorAll('.k-gen').length >= 6, 'LinkedIn template blocks');
-    await go('#tracker'); const tr = doc.getElementById('v-tracker'); tr.querySelector('input').value = 'Acme'; btn(tr, /Add application/).click(); ok(/Acme/.test(tr.textContent), 'tracker adds an application');
+    ok(/Profile analyzer/.test(l.textContent) && !!l.querySelector('input[type=file][accept*="image"]'), 'LinkedIn analyzer takes photos and PDF');
+    await go('#notes'); const nt = doc.getElementById('v-notes'); ok(nt.querySelectorAll('.tab').length >= 12 && nt.querySelector('textarea').value.length > 1000, 'notes show many topics with full notes');
     const p = doc.getElementById('v-skilltest'); await go('#skilltest'); btn(p, /Start today/).click(); await wait(100); ok(p.querySelectorAll('input[name^="pq"]').length === 20, 'daily practice shows 5 questions'); btn(p, /Check answers/).click(); await wait(100); ok(/Score 4 \/ 5/.test(p.textContent), 'practice result shown');
     await go('#simulator'); const sm = doc.getElementById('v-simulator'); sm.querySelector('input[type=text]').value = 'JavaScript'; btn(sm, /^Simulate/).click(); await wait(100); ok(/Gain: \+25/.test(sm.textContent), 'simulator shows gain');
     await go('#company'); ok(doc.getElementById('v-company').textContent.includes('4-week plan'), 'company prep renders plan');

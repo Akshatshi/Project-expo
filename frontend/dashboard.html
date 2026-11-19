@@ -30,8 +30,6 @@
         <a href="#analysis" data-view="analysis"><svg class="ic"><use href="#i-search"/></svg><b>Skill Gap Analysis</b></a>
         <p class="menu-title">Plan</p>
         <a href="#roadmap" data-view="roadmap"><svg class="ic"><use href="#i-map"/></svg><b>Learning Roadmap</b></a>
-        <a href="#schedule" data-view="schedule"><svg class="ic"><use href="#i-calendar"/></svg><b>My Schedule</b></a>
-        <a href="#nextsteps" data-view="nextsteps"><svg class="ic"><use href="#i-steps"/></svg><b>Next Steps</b></a>
         <p class="menu-title">Build</p>
         <a href="#projects" data-view="projects"><svg class="ic"><use href="#i-code"/></svg><b>Projects</b></a>
         <a href="#career" data-view="career"><svg class="ic"><use href="#i-compass"/></svg><b>Career Tracks</b></a>
@@ -39,6 +37,8 @@
         <a href="#focus" data-view="focus"><svg class="ic"><use href="#i-timer"/></svg><b>Focus Timer</b></a>
         <a href="#mentor" data-view="mentor"><svg class="ic"><use href="#i-sparkle"/></svg><b>AI Mentor</b></a>
         <a href="#skilltest" data-view="skilltest"><svg class="ic"><use href="#i-check"/></svg><b>Skill Test</b></a>
+        <a href="#notes" data-view="notes"><svg class="ic"><use href="#i-code"/></svg><b>Study Notes</b></a>
+        <a href="#simulator" data-view="simulator"><svg class="ic"><use href="#i-trend"/></svg><b>Skill Simulator</b></a>
         <a href="#games" data-view="games"><svg class="ic"><use href="#i-gamepad"/></svg><b>Game Zone</b></a>
         <a href="#arcade" data-view="arcade"><svg class="ic"><use href="#i-gamepad"/></svg><b>Code Arcade</b></a>
         <p class="menu-title">Career Kit</p>
@@ -46,9 +46,6 @@
         <a href="#ats" data-view="ats"><svg class="ic"><use href="#i-search"/></svg><b>ATS Checker</b></a>
         <a href="#linkedin" data-view="linkedin"><svg class="ic"><use href="#i-user"/></svg><b>LinkedIn Analyzer</b></a>
         <a href="#interview" data-view="interview"><svg class="ic"><use href="#i-sparkle"/></svg><b>Interview Prep</b></a>
-        <a href="#notes" data-view="notes"><svg class="ic"><use href="#i-code"/></svg><b>Study Notes</b></a>
-        <a href="#tracker" data-view="tracker"><svg class="ic"><use href="#i-check"/></svg><b>Application Tracker</b></a>
-        <a href="#simulator" data-view="simulator"><svg class="ic"><use href="#i-trend"/></svg><b>Skill Simulator</b></a>
         <a href="#company" data-view="company"><svg class="ic"><use href="#i-layers"/></svg><b>Company Prep</b></a>
         <a href="#cover" data-view="cover"><svg class="ic"><use href="#i-user"/></svg><b>Cover Letter</b></a>
         <a href="#market" data-view="market"><svg class="ic"><use href="#i-trend"/></svg><b>Job Market</b></a>
@@ -215,17 +212,6 @@
             </div>
         </section>
 
-        <!-- ========== SCHEDULE ========== -->
-        <section class="view" id="schedule" data-title="My Schedule" data-sub="Build your own timetable: choose days, hours and start time.">
-            <div id="plan-box"></div>
-        </section>
-
-        <!-- ========== NEXT STEPS ========== -->
-        <section class="view" id="nextsteps" data-title="Personalized Next Steps" data-sub="The three things that move you forward fastest.">
-            <div class="three-column" id="next-steps"></div>
-            <div id="next-reco"></div>
-        </section>
-
         <!-- ========== PROJECTS ========== -->
         <section class="view" id="projects" data-title="Projects" data-sub="Recommended projects, plus sample projects in every language.">
             <div class="tabs" id="project-tabs" role="tablist">
@@ -258,7 +244,13 @@
         </section>
 
         <!-- ========== ROADMAP ========== -->
-        <section class="view" id="roadmap" data-title="Learning Roadmap" data-sub="AI-written week-by-week plan with free courses.">
+        <section class="view" id="roadmap" data-title="Learning Roadmap" data-sub="Your roadmap, daily schedule and next steps in one place.">
+            <div class="tabs" id="roadmap-tabs" role="tablist">
+                <button type="button" class="tab active" data-tab="road">Roadmap</button>
+                <button type="button" class="tab" data-tab="sched">My Schedule</button>
+                <button type="button" class="tab" data-tab="next">Next Steps</button>
+            </div>
+            <div class="tab-pane" id="rtab-road">
             <div class="panel">
                 <div class="roadmap-toolbar">
                     <div class="field">
@@ -282,6 +274,18 @@
                 <h3> Free courses for your roadmap</h3>
                 <p class="muted">YouTube playlist searches in English and Hindi - pick the teacher you like best.</p>
                 <div id="course-list"></div>
+            </div>
+            </div>
+
+            <div class="tab-pane" id="rtab-sched" hidden>
+                <p class="muted">Build your own timetable: choose days, hours and start time.</p>
+                <div id="plan-box"></div>
+            </div>
+
+            <div class="tab-pane" id="rtab-next" hidden>
+                <p class="muted">The three things that move you forward fastest.</p>
+                <div class="three-column" id="next-steps"></div>
+                <div id="next-reco"></div>
             </div>
         </section>
 
@@ -363,7 +367,6 @@
         <section class="view" id="linkedin" data-title="LinkedIn Analyzer" data-sub="Tips plus a full profile analysis."><div id="v-linkedin"></div></section>
         <section class="view" id="interview" data-title="Interview Prep" data-sub="Questions with full answers and a mock interview."><div id="v-interview"></div></section>
         <section class="view" id="notes" data-title="Study Notes" data-sub="Notes for every language: edit, upload, download."><div id="v-notes"></div></section>
-        <section class="view" id="tracker" data-title="Application Tracker" data-sub="Track every application from wishlist to offer."><div id="v-tracker"></div></section>
         <section class="view" id="simulator" data-title="Skill Simulator" data-sub="See how one new skill changes your match."><div id="v-simulator"></div></section>
         <section class="view" id="company" data-title="Company Prep" data-sub="What each type of company looks for."><div id="v-company"></div></section>
         <section class="view" id="cover" data-title="Cover Letter & Emails" data-sub="Cover letter, cold email and referral request."><div id="v-cover"></div></section>
@@ -402,6 +405,7 @@
 <script src="js/kit-data.js"></script>
 <script src="js/qbank2.js"></script>
 <script src="js/qbank3.js"></script>
+    <script src="js/notes-data.js"></script>
 <script src="js/games.js"></script>
 <script src="js/tools.js"></script>
 </body>

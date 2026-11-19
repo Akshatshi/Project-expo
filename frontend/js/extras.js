@@ -99,7 +99,7 @@
 
     const views = [...document.querySelectorAll('.view')];
     const ids = views.map((v) => v.id);
-    const alias = { skills: 'progress' };
+    const alias = { skills: 'progress', schedule: 'roadmap', nextsteps: 'roadmap' };
     function route() {
         let id = location.hash.slice(1);
         id = alias[id] || id;

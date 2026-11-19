@@ -1,6 +1,6 @@
 (function () {
     if (!window.SM_BANK || !SM.arcade) return;
-    const { el } = SM, A = SM.arcade, $ = (id) => document.getElementById(id), T = ['Easy', 'Medium', 'Hard', 'Expert', 'Insane'], SPEED = [34, 46, 60, 74, 90], fx = (n) => SM.sfx && SM.sfx.play(n);
+    const { el } = SM, A = SM.arcade, $ = (id) => document.getElementById(id), T = ['Easy', 'Medium', 'Hard', 'Expert', 'Insane'], SPEED = [20, 27, 35, 44, 54], fx = (n) => SM.sfx && SM.sfx.play(n);
     A.state.rain = A.state.rain || {};
     const shuffle = (l) => { const a = l.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
     function home() {
@@ -44,7 +44,7 @@
         onKey = (e) => { const n = +e.key; if (n >= 1 && n <= 4) pick(blocks.find((b) => b.n === n)); }; addEventListener('keydown', onKey);
         function wrap(text, mw) { const words = text.split(' '), lines = []; let cur = ''; words.forEach((w) => { const t = cur ? cur + ' ' + w : w; if (ctx.measureText(t).width > mw && cur) { lines.push(cur); cur = w; } else cur = t; }); lines.push(cur); return lines.slice(0, 6); }
         function frame(ts) {
-            if (!cv.isConnected) return stop(); const dt = Math.min((ts - (last || ts)) / 1000, 0.05); last = ts; const t = ts / 1000;
+            if (!cv.isConnected) return stop(); const dt = Math.min((ts - (last || ts)) / 1000, 0.05); last = ts; const t = ts / 1000, fk = dt * 60;
             const bg = ctx.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, '#080c1e'); bg.addColorStop(1, lang.color + '44'); ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
             ctx.fillStyle = '#fff'; for (let k = 0; k < 50; k++) { ctx.globalAlpha = 0.25 + 0.5 * Math.abs(Math.sin(t + k)); ctx.fillRect((k * 89 % 100) / 100 * W, (k * 47 % 100) / 100 * H, 1.5, 1.5); } ctx.globalAlpha = 1;
             const gl = ctx.createLinearGradient(0, H - 22, 0, H); gl.addColorStop(0, 'rgba(255,60,90,0)'); gl.addColorStop(1, 'rgba(255,60,90,.55)'); ctx.fillStyle = gl; ctx.fillRect(0, H - 22, W, 22);
@@ -56,7 +56,7 @@
                 ctx.fillStyle = c; ctx.beginPath(); ctx.arc(b.x + 14, b.y + 14, 9, 0, 7); ctx.fill(); ctx.fillStyle = '#07090f'; ctx.fillText(b.n, b.x + 14, b.y + 14);
                 ctx.fillStyle = '#eef1f8'; const ls = wrap(b.t, b.w - 14); ls.forEach((l, k) => ctx.fillText(l, b.x + b.w / 2, b.y + b.h / 2 + 6 + (k - (ls.length - 1) / 2) * 15)); ctx.globalAlpha = 1;
             });
-            parts = parts.filter((p) => { p.x += p.vx; p.y += p.vy; p.vy += 0.3; p.l -= 0.03; ctx.globalAlpha = Math.max(p.l, 0); ctx.fillStyle = p.c; ctx.fillRect(p.x, p.y, 3.5, 3.5); return p.l > 0; }); ctx.globalAlpha = 1;
+            parts = parts.filter((p) => { p.x += p.vx * fk; p.y += p.vy * fk; p.vy += 0.3 * fk; p.l -= 0.03 * fk; ctx.globalAlpha = Math.max(p.l, 0); ctx.fillStyle = p.c; ctx.fillRect(p.x, p.y, 3.5, 3.5); return p.l > 0; }); ctx.globalAlpha = 1;
             raf = requestAnimationFrame(frame);
         }
         function end(win) {

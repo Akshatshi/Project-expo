@@ -452,3 +452,42 @@ def mentor_stream(question, context):
         yield {"source": "fallback"}
         yield {"text": mentor_kb.menu_text(context) + note}
     yield {"done": True}
+
+
+def call_gemini_parts(system: str, parts: list, *, max_tokens: int = 4096) -> str:
+    """Like call_gemini, but `parts` may hold text and inlineData (images / PDF) for vision reading."""
+    cfg = current_app.config
+    models = [cfg["GEMINI_MODEL"]]
+    backup = cfg.get("GEMINI_FALLBACK_MODEL")
+    if backup and backup not in models:
+        models.append(backup)
+    last = None
+    for model in models:
+        gen_cfg = {"maxOutputTokens": max_tokens, "temperature": 0.4, "responseMimeType": "application/json"}
+        try:
+            resp = None
+            for level in ("minimal", "low", None):
+                if level:
+                    gen_cfg["thinkingConfig"] = {"thinkingLevel": level}
+                else:
+                    gen_cfg.pop("thinkingConfig", None)
+                resp = requests.post(
+                    API_URL.format(model=model),
+                    headers={"x-goog-api-key": cfg["GEMINI_API_KEY"], "content-type": "application/json"},
+                    json={"systemInstruction": {"parts": [{"text": system}]},
+                          "contents": [{"role": "user", "parts": parts}], "generationConfig": gen_cfg},
+                    timeout=max(cfg["AI_TIMEOUT_SECONDS"], 45))
+                if not (resp.status_code == 400 and "thinking" in resp.text.lower()):
+                    break
+            if resp.status_code != 200:
+                raise RoadmapError(f"AI API returned HTTP {resp.status_code}: {resp.text[:200]}")
+            cands = resp.json().get("candidates") or []
+            ps = cands[0].get("content", {}).get("parts", []) if cands else []
+            text = "".join(p.get("text", "") for p in ps if not p.get("thought"))
+            if not text.strip():
+                raise RoadmapError("AI API returned an empty reply.")
+            return text
+        except (requests.RequestException, RoadmapError) as exc:
+            last = exc
+            log.warning("Vision model %s failed (%s), trying the next one", model, exc)
+    raise last

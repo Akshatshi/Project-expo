@@ -151,3 +151,20 @@ def test_question_quality_flags(client, auth):
         client.post(f"/api/assessment/{p['id']}/submit", json={"answers": [3] * 10}, headers=auth)
     d = client.get("/api/assessment/quality", headers=auth).get_json()
     assert d["total_tracked"] >= 0 and isinstance(d["questions"], list)
+
+
+def test_linkedin_analyze_validates_files(client, auth):
+    assert client.post("/api/linkedin/analyze", json={"files": []}, headers=auth).status_code in (400, 422)
+    r = client.post("/api/linkedin/analyze", json={"files": [{"mime": "text/plain", "data": "abc"}]}, headers=auth)
+    assert r.status_code in (400, 422)
+
+
+def test_linkedin_analyze_with_mock(client, auth, monkeypatch):
+    import json as _json
+    import roadmap_ai
+    client.application.config["GEMINI_API_KEY"] = "x"
+    reply = {"is_profile": True, "score": 62, "categories": [{"name": "Headline", "score": 40, "note": "short"}], "strengths": ["a"], "improvements": ["b"],
+             "headline_suggestion": "h", "about_suggestion": "a"}
+    monkeypatch.setattr(roadmap_ai, "call_gemini_parts", lambda *a, **k: _json.dumps(reply))
+    r = client.post("/api/linkedin/analyze", json={"files": [{"mime": "image/png", "data": "A" * 300_000}]}, headers=auth)     # bigger than the 64 KB default
+    assert r.status_code == 200 and r.get_json()["score"] == 62

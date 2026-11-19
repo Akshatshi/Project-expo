@@ -659,6 +659,32 @@ def linkedin_draft():
         raise ApiError(503, "ai_unavailable", "AI could not write the draft right now. The template version is shown.")
 
 
+@api.post("/linkedin/analyze")
+@login_required
+def linkedin_analyze():
+    request.max_content_length = 14 * 1024 * 1024       # photos / PDF are bigger than the 64 KB default
+    data = body()
+    files = []
+    for f in (data.get("files") or [])[:4]:
+        if not isinstance(f, dict):
+            continue
+        mime, blob = str(f.get("mime", "")).lower(), str(f.get("data", ""))
+        if mime not in linkedin.ALLOWED_MIME or not blob or len(blob) > 9_000_000:
+            fail({"files": "Upload JPG, PNG or WEBP photos, or the PDF from LinkedIn (max 6 MB each)."})
+        files.append({"mime": mime, "data": blob})
+    if not files:
+        fail({"files": "Upload a photo (screenshot) of your profile or the LinkedIn PDF."})
+    if sum(1 for f in files if f["mime"] == "application/pdf") > 1:
+        fail({"files": "Upload only one PDF at a time."})
+    if not current_app.config["GEMINI_API_KEY"]:
+        raise ApiError(503, "ai_unavailable", "AI is not configured on this server.")
+    try:
+        return jsonify(linkedin.analyze(files))
+    except Exception as exc:
+        log.warning("LinkedIn analyze failed: %s", exc)
+        raise ApiError(503, "ai_unavailable", "AI could not read the profile right now. Try again, or use clearer screenshots.")
+
+
 # per-user saved data (resume, notes, tracker, game scores) so it follows the student across devices
 @api.get("/data")
 @login_required

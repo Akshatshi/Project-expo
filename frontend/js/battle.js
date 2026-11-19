@@ -94,7 +94,7 @@
             ctx.restore();
         }
         function draw(ts) {
-            const t = ts / 1000, gd = gy(), s = u();
+            const t = ts / 1000, gd = gy(), s = u(), fk = Math.min(Math.max((ts - (G.lt || ts)) / 16.667, 0), 3); G.lt = ts;   // fk = frames elapsed at 60fps
             const sky = ctx.createLinearGradient(0, 0, 0, gd); sky.addColorStop(0, '#070b1c'); sky.addColorStop(1, col + '55'); ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
             for (let i = 0; i < 40; i++) { ctx.globalAlpha = 0.4 + 0.5 * Math.abs(Math.sin(t + i)); ctx.fillStyle = '#fff'; ctx.fillRect((i * 97 % 100) / 100 * W, (i * 53 % 60) / 100 * gd, 1.6, 1.6); } ctx.globalAlpha = 1;
             ctx.fillStyle = '#f4f1ff'; ctx.globalAlpha = 0.9; ctx.beginPath(); ctx.arc(W * 0.86, H * 0.18, 18 * s, 0, 7); ctx.fill(); ctx.globalAlpha = 1;
@@ -104,17 +104,17 @@
             const gr = ctx.createLinearGradient(0, gd, 0, H); gr.addColorStop(0, '#1b2440'); gr.addColorStop(1, '#0a0f1f'); ctx.fillStyle = gr; ctx.fillRect(0, gd, W, H - gd);
             ctx.strokeStyle = 'rgba(255,255,255,.06)'; for (let i = 1; i < 5; i++) { ctx.beginPath(); ctx.moveTo(0, gd + i * (H - gd) / 5); ctx.lineTo(W, gd + i * (H - gd) / 5); ctx.stroke(); }
             for (let i = 0; i < 14; i++) { const fx = (i * 83 + Math.sin(t * 0.6 + i) * 24) % W, fy = gd - 20 * s - (i * 37 % 90) * s + Math.cos(t + i) * 8; ctx.globalAlpha = 0.5 + 0.5 * Math.sin(t * 2 + i); ctx.fillStyle = '#c8ff8a'; ctx.shadowColor = '#c8ff8a'; ctx.shadowBlur = 8; ctx.fillRect(fx, fy, 2.4, 2.4); } ctx.shadowBlur = 0; ctx.globalAlpha = 1;
-            ctx.save(); if (G.shake > 0) { ctx.translate((Math.random() - 0.5) * G.shake, (Math.random() - 0.5) * G.shake); G.shake *= 0.9; }
+            ctx.save(); if (G.shake > 0) { ctx.translate((Math.random() - 0.5) * G.shake, (Math.random() - 0.5) * G.shake); G.shake *= Math.pow(0.9, fk); }
             const a = alive(), front = G.cur;
-            a.slice().reverse().forEach((e) => { const k = a.indexOf(e), tx = e === front ? 0.62 : 0.62 + 0.1 + k * 0.075; e.x += (tx - e.x) * 0.08; if (e.hurt > 0) e.hurt--; monster(e, e.x * W - (e === front ? G.lunge * W * 0.3 : 0), gd, (e === front ? 0.95 : 0.7) * s * 1.1, t); });
-            G.q.filter((e) => e.die > 0 && e.hp <= 0 && e.die < 1).forEach((e) => { e.die += 0.04; monster(e, e.x * W, gd, 0.95 * s * 1.1, t); });
-            const b = G.boss; if (b.hp > 0 || b.die < 1) { if (b.hp <= 0) b.die += 0.03; if (b.hurt > 0) b.hurt--; const act = G.cur === b; b.x += ((act ? 0.64 : 0.86) - b.x) * 0.06; ctx.globalAlpha = act || b.hp <= 0 ? 1 : 0.3; monster(b, b.x * W - (act ? G.lunge * W * 0.3 : 0), gd, (act ? 1.45 : 0.9) * s * 1.1, t); ctx.globalAlpha = 1; }
-            hero(W * 0.14, gd, s * 1.15, t); if (G.cast > 0) G.cast -= 0.05; if (G.lunge > 0) G.lunge = Math.max(0, G.lunge - 0.03);
-            G.shots = G.shots.filter((p) => { p.t += 0.045; const k = Math.min(p.t, 1); p.x = p.x0 + (p.tx - p.x0) * k; p.y = p.y0 + (p.ty - p.y0) * k - Math.sin(k * Math.PI) * 30 * s; burst(p.x, p.y, '#9ff3ff', 1);
+            a.slice().reverse().forEach((e) => { const k = a.indexOf(e), tx = e === front ? 0.62 : 0.62 + 0.1 + k * 0.075; e.x += (tx - e.x) * (1 - Math.pow(0.92, fk)); if (e.hurt > 0) e.hurt -= fk; monster(e, e.x * W - (e === front ? G.lunge * W * 0.3 : 0), gd, (e === front ? 0.95 : 0.7) * s * 1.1, t); });
+            G.q.filter((e) => e.die > 0 && e.hp <= 0 && e.die < 1).forEach((e) => { e.die += 0.04 * fk; monster(e, e.x * W, gd, 0.95 * s * 1.1, t); });
+            const b = G.boss; if (b.hp > 0 || b.die < 1) { if (b.hp <= 0) b.die += 0.03 * fk; if (b.hurt > 0) b.hurt -= fk; const act = G.cur === b; b.x += ((act ? 0.64 : 0.86) - b.x) * (1 - Math.pow(0.94, fk)); ctx.globalAlpha = act || b.hp <= 0 ? 1 : 0.3; monster(b, b.x * W - (act ? G.lunge * W * 0.3 : 0), gd, (act ? 1.45 : 0.9) * s * 1.1, t); ctx.globalAlpha = 1; }
+            hero(W * 0.14, gd, s * 1.15, t); if (G.cast > 0) G.cast -= 0.05 * fk; if (G.lunge > 0) G.lunge = Math.max(0, G.lunge - 0.03 * fk);
+            G.shots = G.shots.filter((p) => { p.t += 0.035 * fk; const k = Math.min(p.t, 1); p.x = p.x0 + (p.tx - p.x0) * k; p.y = p.y0 + (p.ty - p.y0) * k - Math.sin(k * Math.PI) * 30 * s; burst(p.x, p.y, '#9ff3ff', 1);
                 ctx.shadowColor = '#7ee8ff'; ctx.shadowBlur = 16; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(p.x, p.y, 7 * s, 0, 7); ctx.fill(); ctx.shadowBlur = 0; if (k >= 1) { p.hit(); return false; } return true; });
-            G.parts = G.parts.filter((p) => { p.x += p.vx; p.y += p.vy; p.vy += 0.25; p.l -= 0.025; ctx.globalAlpha = Math.max(p.l, 0); ctx.fillStyle = p.c; ctx.fillRect(p.x, p.y, 3, 3); return p.l > 0; }); ctx.globalAlpha = 1;
+            G.parts = G.parts.filter((p) => { p.x += p.vx * fk; p.y += p.vy * fk; p.vy += 0.25 * fk; p.l -= 0.025 * fk; ctx.globalAlpha = Math.max(p.l, 0); ctx.fillStyle = p.c; ctx.fillRect(p.x, p.y, 3, 3); return p.l > 0; }); ctx.globalAlpha = 1;
             ctx.restore();
-            if (G.flash > 0) { ctx.fillStyle = 'rgba(255,60,80,' + G.flash + ')'; ctx.fillRect(0, 0, W, H); G.flash -= 0.04; }
+            if (G.flash > 0) { ctx.fillStyle = 'rgba(255,60,80,' + G.flash + ')'; ctx.fillRect(0, 0, W, H); G.flash -= 0.04 * fk; }
             if (front && front.boss && front.hp > 0) { ctx.fillStyle = '#000a'; ctx.fillRect(W * 0.3, 10, W * 0.4, 10); ctx.fillStyle = '#ff5470'; ctx.fillRect(W * 0.3, 10, W * 0.4 * front.hp, 10); }
         }
         const loop = (ts) => { if (!G || !cv.isConnected) return stop(); draw(ts); raf = requestAnimationFrame(loop); };

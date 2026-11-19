@@ -58,6 +58,18 @@
             })) : el('p', { class: 'empty', text: 'Add skills in Analyze My Skills to get recommendations for what to learn after them.' }));
     }
 
+    // Roadmap tabs: Roadmap | My Schedule | Next Steps
+    const RT = { road: 'rtab-road', sched: 'rtab-sched', next: 'rtab-next' }, FROM_HASH = { schedule: 'sched', nextsteps: 'next' };
+    function setTab(t, fromClick) {
+        if (!RT[t]) t = 'road';
+        document.querySelectorAll('#roadmap-tabs .tab').forEach((b) => b.classList.toggle('active', b.dataset.tab === t));
+        Object.keys(RT).forEach((k) => { const p = $(RT[k]); if (p) p.hidden = k !== t; });
+        if (fromClick && (location.hash === '#schedule' || location.hash === '#nextsteps')) history.replaceState(null, '', '#roadmap');
+    }
+    document.querySelectorAll('#roadmap-tabs .tab').forEach((b) => b.addEventListener('click', () => setTab(b.dataset.tab, true)));
+    const fromHash = () => { const t = FROM_HASH[location.hash.slice(1)]; if (t) setTab(t); };
+    addEventListener('hashchange', fromHash); fromHash();
+
     SM.planner = { schedule: renderSchedule, reco: renderReco };
     document.addEventListener('sm:render', () => { renderSchedule(); renderReco(); });
 })();

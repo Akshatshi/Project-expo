@@ -57,3 +57,10 @@
 .g-help { margin-top: 10px; }
 .k-gen { background: var(--surface2); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; } .k-gen-head { display: flex; justify-content: space-between; align-items: center; } .k-gen p { white-space: pre-wrap; color: var(--soft); font-size: 13.5px; margin-top: 6px; }
 #certificate { display: none; text-align: center; background: #fff; color: #111; border: 10px double #2b6cf6; padding: 70px 40px; font-family: Georgia, serif; } #certificate * { color: #111; } #certificate h1 { font-size: 34px; margin-bottom: 24px; } #certificate h2 { margin: 12px 0; font-size: 30px; } @media print { #certificate { display: block; } }
+.k-drop-big { padding: 34px 22px; text-align: center; }
+.k-thumbs { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
+.k-thumbs:empty { display: none; }
+.k-thumb { position: relative; width: 120px; height: 120px; border: 1px solid var(--line2); border-radius: 10px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,.03); }
+.k-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.k-thumb .k-pdf { padding: 8px; font-size: 12px; text-align: center; color: var(--soft); word-break: break-all; }
+.k-thumb .btn { position: absolute; top: 4px; right: 4px; padding: 2px 7px; }

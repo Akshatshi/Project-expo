@@ -212,20 +212,76 @@
         };
         return card('Build my LinkedIn profile', hint('Fill a few facts (prefilled from your account and resume). You get headline options, a full About, project entries, skills, URL and messages to paste.'), el('div', { class: 'k-grid' }, ...form), el('div', { class: 'k-toolbar' }, btn('Generate (template)', generate, 'primary'), btn('Rewrite with AI (more personal)', ai)), out);
     }
+    function linkedinAnalyzer() {
+        const files = [], thumbs = el('div', { class: 'k-thumbs' }), note = el('p', { class: 'muted' }), out = el('div');
+        const OK = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'], isPdf = (f) => f.type === 'application/pdf' || /\.pdf$/i.test(f.name);
+        const b64 = (f) => new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(',')[1]); r.onerror = () => no(new Error('Could not read ' + f.name)); r.readAsDataURL(f); });
+        const shrink = (f) => new Promise((ok, no) => {
+            const img = new Image(), u = URL.createObjectURL(f);
+            img.onload = () => { const k = Math.min(1, 1600 / Math.max(img.width, img.height)), c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(u); ok(c.toDataURL('image/jpeg', 0.85).split(',')[1]); };
+            img.onerror = () => no(new Error('Could not open ' + f.name)); img.src = u;
+        });
+        const draw = () => thumbs.replaceChildren(...files.map((f, i) => el('div', { class: 'k-thumb' },
+            isPdf(f) ? el('span', { class: 'k-pdf', text: 'PDF: ' + f.name.slice(0, 24) }) : el('img', { src: f.url, alt: 'Profile photo ' + (i + 1) }),
+            btn('✕', () => { files.splice(i, 1); draw(); }, 'k-small'))));
+        const add = (list) => {
+            note.textContent = '';
+            for (const f of list) {
+                const type = isPdf(f) ? 'application/pdf' : f.type;
+                if (!OK.includes(type)) { note.textContent = f.name + ' skipped: use a JPG, PNG or WEBP photo, or a PDF.'; continue; }
+                if (f.size > (isPdf(f) ? 6e6 : 12e6)) { note.textContent = f.name + ' skipped: file is too large (PDF max 6 MB, photo max 12 MB).'; continue; }
+                if (isPdf(f) && files.some(isPdf)) { note.textContent = 'Only one PDF at a time.'; continue; }
+                if (files.length >= 4) { note.textContent = 'Maximum 4 files.'; break; }
+                f.url = isPdf(f) ? '' : URL.createObjectURL(f); files.push(f);
+            }
+            draw();
+        };
+        const drop = el('label', { class: 'k-drop k-drop-big' }, el('span', { text: 'Upload profile photos (screenshots) or the LinkedIn PDF' }),
+            el('input', { type: 'file', accept: 'image/jpeg,image/png,image/webp,application/pdf,.pdf', multiple: true, hidden: true, onchange: (e) => { add([...e.target.files]); e.target.value = ''; } }));
+        drop.ondragover = (e) => e.preventDefault();
+        drop.ondrop = (e) => { e.preventDefault(); add([...e.dataTransfer.files]); };
+
+        const copy = (text) => btn('Copy', (e) => { navigator.clipboard.writeText(text).then(() => { e.target.textContent = 'Copied'; }).catch(() => { e.target.textContent = 'Copy failed'; }); }, 'k-small');
+        const list = (title, arr, mark) => arr.length ? [el('h4', { class: 'subheading', text: title }), ...arr.map((s) => el('p', { text: mark + ' ' + s }))] : [];
+        const show = (d, extra) => {
+            if (!d.is_profile) { out.replaceChildren(card('This does not look like a LinkedIn profile', hint('Upload screenshots of your own LinkedIn profile page (top section, About, Experience, Skills) or the PDF from Profile > More > Save to PDF.'))); return; }
+            out.replaceChildren(card('Profile strength' + (d.name ? ' for ' + d.name : ''), extra ? hint(extra) : null,
+                el('div', { class: 'k-result' }, ring(d.score, 'profile score'), hbars(d.categories.map((c) => [c.name, c.score]))),
+                ...d.categories.filter((c) => c.note).map((c) => el('p', { class: 'muted', text: c.name + ': ' + c.note })),
+                ...list('What is working', d.strengths || [], '✓'), ...list('Improve first', d.improvements || [], '•'),
+                d.headline_suggestion ? el('div', { class: 'k-tip' }, el('b', { text: 'Suggested headline' }), el('p', { text: d.headline_suggestion }), copy(d.headline_suggestion)) : null,
+                d.about_suggestion ? el('div', { class: 'k-tip' }, el('b', { text: 'Suggested About section' }), el('p', { text: d.about_suggestion }), copy(d.about_suggestion)) : null));
+        };
+        // used only when the AI is switched off and a PDF was uploaded: a plain keyword check on the PDF text
+        const localScan = (text) => {
+            const t = text.toLowerCase(), has = (re) => re.test(t) ? 100 : 0, n = (re) => (t.match(re) || []).length;
+            const cats = [['About section', Math.min(text.length / 600, 1) * 100], ['Experience & projects', Math.min(n(/\b(intern|project|developer|engineer|built|developed)\b/g) / 4, 1) * 100],
+                ['Skills', Math.min(n(/python|java|sql|react|html|css|javascript|excel|git|aws|c\+\+|machine learning|data/g) / 6, 1) * 100], ['Results with numbers', Math.min(n(/\d+\s?%|\d+\+|\b\d{2,}\b/g) / 3, 1) * 100],
+                ['Education', has(/education|b\.?tech|b\.?e\b|bca|mca|bsc|university|college/)], ['Open to work / goal', has(/open to|seeking|looking for|internship/)], ['Certifications & links', has(/certif|github\.com|coursera|nptel|udemy/)]];
+            const score = cats.reduce((s, c) => s + c[1], 0) / cats.length;
+            return { is_profile: true, score, categories: cats.map(([name, s]) => ({ name, score: s, note: '' })), strengths: [], improvements: cats.filter((c) => c[1] < 60).map((c) => c[0] + ': add more detail here.') };
+        };
+        const go = btn('Analyze my profile', async (e) => {
+            if (!files.length) { note.textContent = 'Add at least one photo or the PDF first.'; return; }
+            e.target.disabled = true; note.textContent = 'Reading your profile... this can take up to a minute.'; out.replaceChildren();
+            try {
+                const payload = await Promise.all(files.map(async (f) => isPdf(f) ? { mime: 'application/pdf', data: await b64(f) } : { mime: 'image/jpeg', data: await shrink(f) }));
+                show(await api.post('/linkedin/analyze', { files: payload })); note.textContent = '';
+            } catch (err) {
+                const pdf = files.find(isPdf);
+                if (err.status === 503 && pdf) {
+                    try { show(localScan(await readFile(pdf)), 'AI is offline, so this is a basic keyword check of your PDF. Photos need the AI.'); note.textContent = ''; } catch (e2) { note.textContent = e2.message; }
+                } else note.textContent = err.message;
+            }
+            e.target.disabled = false;
+        }, 'primary');
+        return el('div', {}, card('Profile analyzer (photo or PDF)', hint('Upload up to 4 clear screenshots or photos of your LinkedIn profile (top section, About, Experience, Skills), or the PDF from Profile > More > Save to PDF. Files are sent to the AI only to read this profile and are not stored.'),
+            drop, thumbs, note, go), out);
+    }
     function viewLinkedin(root) {
-        const url = input('https://www.linkedin.com/in/your-name'), head = input('Your headline'), prof = area('Paste your profile text, or upload the PDF from LinkedIn (More > Save to PDF)', 9), note = el('p', { class: 'muted' }), out = el('div');
         root.append(el('div', { class: 'k-split even' },
             card('Tips and tricks', ...LI_TIPS.map(([h, t]) => el('div', { class: 'k-tip' }, el('b', { text: h }), el('p', { text: t })))),
-            el('div', {}, linkedinBuilder(), card('Full profile analyzer', hint('LinkedIn blocks automated reading of profile links, so upload the PDF that LinkedIn gives you (Profile > More > Save to PDF) or paste your text. The link is only checked for format.'), field('Profile URL', url), field('Headline', head), uploader(prof, note), note, field('Full profile text', prof),
-                btn('Analyze full profile', () => {
-                    const t = (head.value + ' ' + prof.value).toLowerCase(), h = head.value.trim();
-                    const has = (re) => re.test(t) ? 100 : 0, n = (re) => (t.match(re) || []).length;
-                    const cats = [['Profile link', /linkedin\.com\/in\/[\w-]{3,}/i.test(url.value) ? 100 : 0], ['Headline (keywords, 40+ chars)', h.length >= 40 && /[|,]/.test(h) ? 100 : h.length >= 20 ? 50 : 0], ['About section', Math.min(prof.value.length / 600, 1) * 100],
-                        ['Experience / projects', Math.min((n(/\b(intern|project|developer|engineer|built|developed)\b/g)) / 4, 1) * 100], ['Skills listed', Math.min(n(/python|java|sql|react|html|css|javascript|excel|git|aws|c\+\+|machine learning|data/g) / 6, 1) * 100],
-                        ['Results with numbers', Math.min(n(/\d+\s?%|\d+\+|\b\d{2,}\b/g) / 3, 1) * 100], ['Education', has(/education|b\.?tech|b\.?e\b|bca|mca|bsc|university|college/)], ['Open to work / goal', has(/open to|seeking|looking for|internship/)], ['Certifications & links', has(/certif|github\.com|coursera|nptel|udemy/)]];
-                    const total = cats.reduce((s, c) => s + c[1], 0) / cats.length, weak = cats.filter((c) => c[1] < 60).map((c) => c[0]);
-                    out.replaceChildren(card('Profile strength', el('div', { class: 'k-result' }, ring(total, 'profile score'), hbars(cats)), el('h4', { class: 'subheading', text: weak.length ? 'Improve first' : 'Great profile' }), ...weak.map((w) => el('p', { text: '• ' + w + ': see the matching tip on the left.' }))));
-                }, 'primary')), out)));
+            el('div', {}, linkedinBuilder(), linkedinAnalyzer())));
     }
 
     function voiceBox(question) {
@@ -264,7 +320,7 @@
         ta.oninput = () => store.set(key(), ta.value);
         names.forEach((n) => tabs.append(el('button', { class: 'tab', type: 'button', text: n, onclick: () => { on = n; load(); } })));
         const note = el('p', { class: 'muted', text: 'Edits save automatically in this browser.' });
-        root.append(card('Study notes', hint('Ready-made notes for each language. Edit them, add your own, upload a file, or download.'), tabs, ta,
+        root.append(card('Study notes', hint('Ready-made notes for languages, DSA, CS basics, web, data science, aptitude and interviews. Edit them, add your own, upload a file, or download.'), tabs, ta,
             el('div', { class: 'k-toolbar' }, btn('Download .md', () => download(on.replace(/\W+/g, '-') + '-notes.md', ta.value), 'primary'), uploader(ta, note), btn('Reset to original', () => { store.del(key()); load(); }))), note);
         load();
     }
@@ -359,7 +415,7 @@
 
     function viewPrivacy(root) {
         const msg = el('p', { class: 'muted' }), pw = el('input', { type: 'password', placeholder: 'Your password' });
-        root.append(card('Your data', hint('We store your account (name, email), your skills and analyses, roadmaps, test results and the notes, resume and tracker you save. Test question papers expire in use and are never shared. Your name appears on the leaderboard only as a first name and initial.'),
+        root.append(card('Your data', hint('We store your account (name, email), your skills and analyses, roadmaps, test results and the notes, resume and tracker you save. LinkedIn photos or PDFs you upload for analysis are sent to the AI service to be read and are not stored. Test question papers expire in use and are never shared. Your name appears on the leaderboard only as a first name and initial.'),
             el('div', { class: 'k-toolbar' }, btn('Export all my data (.json)', async () => { try { download('my-skillmatrix-data.json', JSON.stringify(await api.get('/account/export'), null, 2)); msg.textContent = 'Downloaded.'; } catch (e) { msg.textContent = e.message; } }, 'primary'))),
             card('Delete my account', hint('This permanently removes your account and everything saved. It cannot be undone. Export first if you want a copy.'), field('Confirm with password', pw),
                 btn('Delete my account', async () => { if (!pw.value) { msg.textContent = 'Enter your password first.'; return; } if (!confirm('Delete your account and all data permanently?')) return;

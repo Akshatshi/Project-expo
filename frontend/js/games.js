@@ -33,7 +33,7 @@
     const space = { id: 'space', help: 'Move with mouse, finger or ← → keys. Your ship fires automatically: shoot the asteroid with the RIGHT answer. Wrong hit = lose a life.', start(g) {
         const c = g.ctx, stars = Array.from({ length: 90 }, () => ({ x: Math.random() * W, y: Math.random() * H, z: 0.3 + Math.random() * 1.2 }));
         let ship = { x: W / 2, tx: W / 2 }, shots = [], rocks = [], fx = [], score = 0, lives = 3, q, last = performance.now(), fire = 0, alive = true, raf, t = 0;
-        const keys = {}, spawn = () => { q = g.next(); const lane = shuffle([0, 1, 2, 3]); rocks = q.opts.map((o, i) => ({ x: 80 + lane[i] * 160 + Math.random() * 20, y: -30 - Math.random() * 60, vy: 0.04 + Math.min(score, 200) / 4000, r: 38, label: o, ok: o === q.right, seed: Math.random() * 6 })); };
+        const keys = {}, spawn = () => { q = g.next(); const lane = shuffle([0, 1, 2, 3]); rocks = q.opts.map((o, i) => ({ x: 80 + lane[i] * 160 + Math.random() * 20, y: -30 - Math.random() * 60, vy: 0.016 + Math.min(score, 200) / 12000, r: 38, label: o, ok: o === q.right, seed: Math.random() * 6 })); };
         const boom = (x, y, col) => { for (let i = 0; i < 26; i++) { const a = Math.random() * 6.28, s = 0.05 + Math.random() * 0.25; fx.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 600, col }); } };
         const onMove = (e) => { const r = g.cv.getBoundingClientRect(), p = e.touches ? e.touches[0] : e; ship.tx = (p.clientX - r.left) / r.width * W; };
         const kd = (e) => { keys[e.key] = true; }, ku = (e) => { keys[e.key] = false; };
@@ -64,9 +64,9 @@
             if (alive) {
                 if (keys.ArrowLeft || keys.a) ship.tx -= dt * 0.5; if (keys.ArrowRight || keys.d) ship.tx += dt * 0.5;
                 ship.tx = Math.max(24, Math.min(W - 24, ship.tx)); ship.x += (ship.tx - ship.x) * Math.min(dt * 0.02, 1);
-                if ((fire -= dt) <= 0) { shots.push({ x: ship.x, y: H - 80 }); fire = 260; }
+                if ((fire -= dt) <= 0) { shots.push({ x: ship.x, y: H - 80 }); fire = 300; }
                 stars.forEach((s) => { s.y += s.z * dt * 0.05; if (s.y > H) { s.y = 0; s.x = Math.random() * W; } });
-                shots.forEach((b) => { b.y -= dt * 0.55; }); shots = shots.filter((b) => b.y > -20);
+                shots.forEach((b) => { b.y -= dt * 0.5; }); shots = shots.filter((b) => b.y > -20);
                 rocks.forEach((r) => { r.y += r.vy * dt * 4; });
                 for (const r of rocks.slice()) {
                     const b = shots.find((s) => Math.hypot(s.x - r.x, s.y - r.y) < r.r); if (!b) continue;
@@ -88,7 +88,7 @@
 
     const racer = { id: 'racer', help: 'Press ← → (or tap the left / right side) to change lane. Drive through the board with the RIGHT answer. Wrong board = lose a life.', start(g) {
         const c = g.ctx, HY = 150, RW0 = 80, RW1 = 600;
-        let lane = 1, vx = 1, gate, score = 0, lives = 3, speed = 0.00022, off = 0, last = performance.now(), alive = true, raf, flash = 0, shake = 0;
+        let lane = 1, vx = 1, gate, score = 0, lives = 3, speed = 0.00011, off = 0, last = performance.now(), alive = true, raf, flash = 0, shake = 0;
         const rw = (y) => RW0 + (RW1 - RW0) * (y - HY) / (H - HY), lx = (l, y) => W / 2 + (l - 1) * rw(y) / 3;
         const make = () => { const q = g.next(); gate = { z: 0.02, opts: q.opts.slice(0, 3), ok: q.opts.slice(0, 3).indexOf(q.right) }; if (gate.ok < 0) { gate.opts[2] = q.right; gate.ok = 2; } };
         const go = (d) => { lane = Math.max(0, Math.min(2, lane + d)); };
@@ -121,7 +121,7 @@
             const dt = Math.min(now - last, 40); last = now;
             if (alive) {
                 vx += (lane - vx) * Math.min(dt * 0.012, 1); off = (off + dt * speed * 14) % 14; gate.z += dt * speed; flash = Math.max(flash - dt, 0); shake = flash > 0;
-                if (gate.z >= 0.93) { if (lane === gate.ok) { score += 10; speed = Math.min(speed + 0.000012, 0.0004); } else { lives--; flash = 400; } make(); }
+                if (gate.z >= 0.93) { if (lane === gate.ok) { score += 10; speed = Math.min(speed + 0.000006, 0.0002); } else { lives--; flash = 400; } make(); }
                 if (lives <= 0) { alive = false; g.over(score); }
             }
             draw(); g.hud('Code Racer');
